@@ -1,0 +1,2533 @@
+From awickner at sheep.berlios.de  Mon Apr 11 14:11:41 2005
+From: awickner at sheep.berlios.de (Andreas Wickner at BerliOS)
+Date: Mon, 11 Apr 2005 14:11:41 +0200
+Subject: [Opensess-svn] r19 - trunk/openSess
+Message-ID: <200504111211.j3BCBfGw016906@sheep.berlios.de>
+
+Author: awickner
+Date: 2005-04-11 14:11:39 +0200 (Mon, 11 Apr 2005)
+New Revision: 19
+
+Modified:
+   trunk/openSess/GlobalNewWindow.java
+   trunk/openSess/MainWindow.java
+   trunk/openSess/Persons.java
+   trunk/openSess/Roles.java
+   trunk/openSess/SharedDataComboBoxModel.java
+   trunk/openSess/ShowSolutionWindow.java
+   trunk/openSess/Solution.java
+   trunk/openSess/SolutionPanel.java
+   trunk/openSess/Solver.java
+   trunk/openSess/SolverConstructor.java
+Log:
+New role assignment algorithm and new satisfaction based evaluation function
+
+Modified: trunk/openSess/GlobalNewWindow.java
+===================================================================
+--- trunk/openSess/GlobalNewWindow.java	2005-03-20 13:54:06 UTC (rev 18)
++++ trunk/openSess/GlobalNewWindow.java	2005-04-11 12:11:39 UTC (rev 19)
+@@ -159,8 +159,8 @@
+       int roles    = getNumberOfRoles();
+       int sessions = getNumberOfSessions();
+       
+-      boolean topicsOk = (topics % (roles*sessions)) == 0;
+-      boolean personsOk = (persons % (roles*sessions)) == 0;
++      boolean topicsOk = (topics % sessions) == 0;
++      boolean personsOk = (persons % sessions) == 0;
+       
+       if (topicsOk && personsOk)
+       {
+@@ -173,11 +173,11 @@
+         
+         if (!topicsOk)
+           msg.append("- The number of topics must be divisible by\n"
+-                     +	"  (numberOfRoles * numberOfSessions)\n");
++                     +	"  the number of sessions\n");
+         
+         if (!personsOk)
+           msg.append("- The number of persons must be divisible by\n"
+-                     +	"  (numberOfRoles * numberOfSessions)\n");
++                     +	"  the number of sessions\n");
+         
+         JOptionPane.showMessageDialog(this, msg, "Constraint Violation", JOptionPane.ERROR_MESSAGE); 
+       }
+
+Modified: trunk/openSess/MainWindow.java
+===================================================================
+--- trunk/openSess/MainWindow.java	2005-03-20 13:54:06 UTC (rev 18)
++++ trunk/openSess/MainWindow.java	2005-04-11 12:11:39 UTC (rev 19)
+@@ -145,11 +145,12 @@
+    * @param topicClusters     the number of topic clusterings to try.
+    * @param personAssignments the number of person assignments to try.
+    * @param attempts          the maximum number of assignment attempts.
++   * @param keepBest          the number of best solutions to keep in a list.
+    */
+   public void setSolutionParameters(int topicClusters, int personAssignments,
+-                                    int attempts)
++                                    int attempts, int keepBest)
+   {
+-    solutionPanel.setSolutionParameters(topicClusters, personAssignments, attempts);
++    solutionPanel.setSolutionParameters(topicClusters, personAssignments, attempts, keepBest);
+   }
+   
+   /**
+@@ -496,7 +497,8 @@
+     Indenter.println(stream, level+1, "<solutionParameters topicClusters=\""
+                      + solutionPanel.getTopicClusters() + "\" personAssignments=\""
+                      + solutionPanel.getPersonAssignments() + "\" attempts=\""
+-                     + solutionPanel.getAttempts() + "\"/>");
++                     + solutionPanel.getAttempts() + "\" keepBest=\""
++                     + solutionPanel.getKeepBest() + "\"/>");
+     
+     Indenter.println(stream, level+1, "<solutions>");
+     
+
+Modified: trunk/openSess/Persons.java
+===================================================================
+--- trunk/openSess/Persons.java	2005-03-20 13:54:06 UTC (rev 18)
++++ trunk/openSess/Persons.java	2005-04-11 12:11:39 UTC (rev 19)
+@@ -194,13 +194,14 @@
+         pref[p][k] = tmp;
+       }
+     }
+-    createPrefInx();
++    
++    createPreferenceIndex();
+   }
+ 
+   /**
+    * Create an inverted preference list containing the the rank of each topic.
+    */
+-  protected void createPrefInx()
++  public void createPreferenceIndex()
+   {
+     int dimPersons = solver.getPersons().getNumber();
+     int dimTopics  = solver.getTopics().getNumber();
+
+Modified: trunk/openSess/Roles.java
+===================================================================
+--- trunk/openSess/Roles.java	2005-03-20 13:54:06 UTC (rev 18)
++++ trunk/openSess/Roles.java	2005-04-11 12:11:39 UTC (rev 19)
+@@ -55,9 +55,11 @@
+   /**
+    * Constructs a new Roles object from information in the Solver object.
+    * 
+-   * @param solver the Solver object containing configuration information.
++   * @param dimRoles    the number of roles.
++   * @param dimPersons  the number of persons.
++   * @param dimSessions the number of sessions.
+    */
+-  public Roles(Solver solver, int dimRoles)
++  public Roles(int dimRoles, int dimPersons, int dimSessions)
+   {
+     names = new DefaultListModel();
+     minPerSession = new int[dimRoles];
+@@ -66,10 +68,8 @@
+     for (int role = 0;  role < dimRoles;  ++role)
+     {
+       names.addElement("Role " + (role+1));
+-      minPerSession[role] = solver.getPersons().getNumber() 
+-      											/ solver.getSessionNumber()
+-                            / dimRoles;
+-      maxPerSession[role] = minPerSession[role];
++      minPerSession[role] = dimPersons / dimSessions / dimRoles;
++      maxPerSession[role] = (int)(0.9 + ((double)dimPersons) / dimSessions / dimRoles);
+     }
+     
+     if (getNumber() > 0)
+
+Modified: trunk/openSess/SharedDataComboBoxModel.java
+===================================================================
+--- trunk/openSess/SharedDataComboBoxModel.java	2005-03-20 13:54:06 UTC (rev 18)
++++ trunk/openSess/SharedDataComboBoxModel.java	2005-04-11 12:11:39 UTC (rev 19)
+@@ -7,7 +7,7 @@
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     17.02.2005
+- * Revision ID: $Id$
++ * Revision ID: $Id: SharedDataComboBoxModel.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -62,7 +62,7 @@
+    */
+   public Object getElementAt(int index)
+   {
+-    return data.getElementAt(index);
++    return (index >= data.size()) ? null : data.getElementAt(index);
+   }
+   
+   /**
+
+Modified: trunk/openSess/ShowSolutionWindow.java
+===================================================================
+--- trunk/openSess/ShowSolutionWindow.java	2005-03-20 13:54:06 UTC (rev 18)
++++ trunk/openSess/ShowSolutionWindow.java	2005-04-11 12:11:39 UTC (rev 19)
+@@ -45,7 +45,7 @@
+ public class ShowSolutionWindow
+   extends ListEditWindow
+ {
+-  private JLabel meanDevValue, maxDevValue, stdDevValue, targetValue;
++  private JLabel meanSatValue, minSatValue, stdDevValue, targetValue;
+   private JPanel topicsPanel, rolesPanel;
+   private Color  gColor[];
+   private Solver solver;
+@@ -99,8 +99,8 @@
+     tabPanel.add("Role Assignment", rolesScrollPanel);
+     
+     // Set up Statistics
+-    meanDevValue        = new JLabel();
+-    maxDevValue         = new JLabel();
++    meanSatValue        = new JLabel();
++    minSatValue         = new JLabel();
+     stdDevValue         = new JLabel();
+     targetValue         = new JLabel();
+    
+@@ -116,12 +116,12 @@
+     vc.weightx = 1.0;
+     vc.weighty = 0.0;
+     
+-    statPanel.add(new JLabel("Mean Deviation:"), lc);
++    statPanel.add(new JLabel("Mean Satisfaction:"), lc);
+     vc.gridy = 0;
+-    statPanel.add(meanDevValue, vc);
+-    statPanel.add(new JLabel("Maximum Deviation:"), lc);
++    statPanel.add(meanSatValue, vc);
++    statPanel.add(new JLabel("Minimum Satisfaction:"), lc);
+     vc.gridy = 1;
+-    statPanel.add(maxDevValue, vc);
++    statPanel.add(minSatValue, vc);
+     statPanel.add(new JLabel("Standard Deviation:"), lc);
+     vc.gridy = 2;
+     statPanel.add(stdDevValue, vc);
+@@ -262,8 +262,8 @@
+     //                   + ", s" + sNumber + ", g" + gNumber);
+         
+     // Update statistics
+-    meanDevValue.setText("" + solution.getMeanDeviation());
+-    maxDevValue.setText("" + solution.getMaximumDeviation());
++    meanSatValue.setText("" + solution.getMeanSatisfaction());
++    minSatValue.setText("" + solution.getMinimumSatisfaction());
+     stdDevValue.setText("" + solution.getStandardDeviation());
+     targetValue.setText("" + solution.getTargetValue());
+ 
+@@ -292,7 +292,7 @@
+         {
+           if (t > 0)
+             if (t == tNumber+1)
+-              label.setText("Dev.");
++              label.setText("Sat.");
+             else
+               label.setText(topics.getName(t-1));
+         }
+@@ -306,8 +306,8 @@
+           label.setText(roles.getNameExtended(solution.getRole(p-1, t-1)));
+           label.setForeground(gColor[solution.topicToGroup(t-1)]);
+         }
+-        else  // deviation sums
+-          label.setText("" + solution.getPersonSum(p-1));
++        else  // satisfaction value
++          label.setText("" + solution.getPersonSatisfaction(p-1));
+       }
+   }
+   
+
+Modified: trunk/openSess/Solution.java
+===================================================================
+--- trunk/openSess/Solution.java	2005-03-20 13:54:06 UTC (rev 18)
++++ trunk/openSess/Solution.java	2005-04-11 12:11:39 UTC (rev 19)
+@@ -36,8 +36,8 @@
+   private String name;
+   private int    group[][];
+   private int    role[][];
+-  private int    personSum[];
+-  private double meanDeviation, maxDeviation, stdDeviation;
++  private double personSat[];
++  private double meanSatisfaction, minSatisfaction, stdDeviation;
+   private int    targetValue;
+   private int    groupNumber;
+   private int    groupSize;
+@@ -57,7 +57,7 @@
+     groupSize   = dimSessions;
+     group       = new int[groupNumber][groupSize];
+     role        = new int[dimPersons][dimTopics];
+-    personSum   = new int[dimPersons];
++    personSat   = new double[dimPersons];
+   }
+ 
+   /**
+@@ -147,16 +147,30 @@
+   }
+   
+   /**
+-   * Return the sum of deviations for a specified person.
++   * Return the satisfaction value for a specified person.
+    * 
+    * @param person the person.
+-   * @return the sum of deviations.
++   * @return the satisfaction value.
+    */
+-  public int getPersonSum(int person)
++  public double getPersonSatisfaction(int person)
+   {
+-    return personSum[person];
++    return personSat[person];
+   }
+ 	
++  public boolean greaterThan(Solution other)
++  {
++    if (this == other)
++      return false;  // identical
++    
++    if (this.getMeanSatisfaction() > other.getMeanSatisfaction())
++      return true;
++    else if (this.getMeanSatisfaction() < other.getMeanSatisfaction())
++      return false;
++    
++    // same mean deviation, compare max deviation
++    return this.getMinimumSatisfaction() > other.getMinimumSatisfaction();
++  }
++  
+ 	/**
+ 	 * Calculates the target value of the current assignment.
+ 	 * 
+@@ -180,7 +194,7 @@
+ 
+       val += pval[p];
+     }
+-    
++
+     double mean = (val * 1.0 / dimPersons);
+     double dev = 0;
+     
+@@ -195,23 +209,23 @@
+   }
+   
+   /**
+-   * Return the mean deviation of this solution.
++   * Return the mean satisfaction value of this solution.
+    * 
+-   * @return the mean deviation.
++   * @return the mean satisfaction.
+    */
+-  public double getMeanDeviation()
++  public double getMeanSatisfaction()
+   {
+-    return meanDeviation;
++    return meanSatisfaction;
+   }
+   
+   /**
+-   * Return the maximum deviation of this solution.
++   * Return the minimum satisfaction value of this solution.
+    * 
+-   * @return the maximum deviation.
++   * @return the minimum satisfaction.
+    */
+-  public double getMaximumDeviation()
++  public double getMinimumSatisfaction()
+   {
+-    return maxDeviation;
++    return minSatisfaction;
+   }
+   
+   /**
+@@ -272,9 +286,9 @@
+    * @param person the person.
+    * @param sum the sum of deviations.
+    */
+-  public void setPersonSum(int person, int sum)
++  public void setPersonSum(int person, double sum)
+   {
+-    personSum[person] = sum;
++    personSat[person] = sum;
+   }
+   
+   /**
+@@ -282,52 +296,98 @@
+    */
+   protected void evaluate()
+   {
++    calculateTargetValue();
++    
+     Persons persons = solver.getPersons();
++    Roles   roles   = solver.getRoles();
+     int     dimPersons = persons.getNumber();
+     int     dimTopics  = solver.getTopics().getNumber();
++    int     dimRoles   = solver.getRoles().getNumber();
+     int     dimSessions = solver.getSessionNumber();
+-    float   total = 0;
++    int     personsPerSession = dimPersons / dimSessions;
+     int     sumMax = 0;
+-    int     pval[] = new int[dimPersons];
+-    int     val = 0;
++    boolean debug = false;
+     
+-    for (int p = 0; p < dimPersons; p++)
++    // Create a vector that holds the maximum achievable roles
++    // in a session, which includes a special role for
++    // non-participation (dimRoles+1).
++    int optRoles[] = new int[dimPersons];
++    int currentRole = 0;
++    int rolesLeft = 0;
++    
++    if (debug)
++      System.out.println("\noptRoles:");
++    
++    for (int p = 0;  p < dimPersons;  ++p)
+     {
+-      for (int t = 0; t < dimTopics; t++)
+-        if (getRole(p, t) > 0)
+-          pval[p] += persons.getPreferenceIndex(p, t);
++      if (p >= personsPerSession)
++        optRoles[p] = dimRoles + 1;
++      else
++      {	
++        if (rolesLeft <= 0)
++          // next role: see how many we can use at maximum
++          rolesLeft = roles.getMaximumPerSession(currentRole++);
+       
+-      val += pval[p];
++        if (rolesLeft-- > 0)
++          optRoles[p] = currentRole;
++      }
++    
++      if (debug)
++        System.out.println(p + ": " + optRoles[p]);
+     }
+     
+-    double mean = ((double)val) / dimPersons;
+-    double dev = 0;
++    // Record and sum up the satisfaction values for all participants
++    double sat[][] = new double[dimPersons][dimTopics];
++    double total   = 0;
++    double minSat  = 1.0;
+     
+-    for (int p = 0;  p < dimPersons;  p++)
+-      dev += (mean - pval[p]) * (mean - pval[p]);
+-    
+-    dev = Math.sqrt(dev / dimPersons);
+-         
+-    for (int p = 0; p < dimPersons; p++)
++    for (int p = 0;  p < dimPersons;  ++p)
+     {
+-      int sum = -(dimTopics / dimSessions)
+-                * ((dimTopics / dimSessions) - 1) / 2;
++      personSat[p] = 0;
+       
+-      for (int t = 0; t < dimTopics; t++)
+-        if (getRole(p, t) > 0)
+-          sum += persons.getPreferenceIndex(p, t); 
++      for (int t = 0;  t < dimTopics;  ++t)
++      {
++        int actualRole = getRole(p, t);
++        
++        if (actualRole == 0)
++          actualRole = dimRoles+1;
++        
++        int optimalRole = optRoles[(persons.getPreferenceIndex(p, t) * dimPersons) 
++                                   / dimTopics];
++        double s = 1.0 - Math.abs(optimalRole - actualRole) / (double)dimRoles;
++        
++        if (debug)
++          System.out.println(p + "," + t + ": act " + actualRole
++                             + "  opt " + optimalRole + "  sat " 
++                             + s);
++        
++        sat[p][t]     = s;
++        personSat[p] += s;
++        total        += s;
++      }
++    
++      personSat[p] /= dimTopics;
+       
+-      personSum[p] = sum;
++      if (personSat[p] < minSat)
++        minSat = personSat[p];
+       
+-      total += sum;
+-      
+-      if (sumMax < sum)
+-        sumMax = sum;
++      if (debug)
++        System.out.println("Total satisfaction for P" + p + ": " + personSat[p]);
+     }
+ 
+-    meanDeviation = total / dimPersons;
+-    maxDeviation  = sumMax;  
+-    stdDeviation  = dev;
++    double mean = total / (dimPersons * dimTopics);
++    double dev = 0;
++    
++    for (int p = 0;  p < dimPersons;  ++p)
++      for (int t = 0;  t < dimTopics;  ++t)
++      {
++        double diff = mean - sat[p][t];
++        dev += diff * diff;
++      }
++    
++    meanSatisfaction = mean;
++    minSatisfaction  = minSat;  
++    stdDeviation     = Math.sqrt(dev / (dimPersons * dimTopics));
+   }
+ 
+   /**
+@@ -339,8 +399,8 @@
+                      + getName() + "\">");
+ 
+     Indenter.println(stream, level+1, "<statistics meandev=\""
+-                     + getMeanDeviation() + "\" maxdev=\""
+-                     + getMaximumDeviation() + "\" stddev=\""
++                     + getMeanSatisfaction() + "\" maxdev=\""
++                     + getMinimumSatisfaction() + "\" stddev=\""
+                      + getStandardDeviation() + "\" target=\""
+                      + getTargetValue() + "\"/>");
+     
+@@ -379,12 +439,38 @@
+     
+     for (int p = 0;  p < solver.getPersons().getNumber();  ++p)
+       Indenter.println(stream, level+2, "<personSum sum=\"" 
+-                       + getPersonSum(p) + "\"/>");
++                       + getPersonSatisfaction(p) + "\"/>");
+     
+     Indenter.println(stream, level+1, "</personSums>");
+     
+     Indenter.println(stream, level, "</solution>");
+   }
++
++  public String debugString()
++  {
++    int     dimPersons = solver.getPersons().getNumber();
++    int     dimTopics  = solver.getTopics().getNumber();
++    StringBuffer s = new StringBuffer();
++   
++    s.append("\n    ");
++    
++    for (int t = 0; t < dimTopics; t++)
++      s.append(" T" + t);
++    
++    s.append("\n");
++    
++    for (int p = 0; p < dimPersons; p++)
++    {
++      s.append("P" + p + ": ");
++
++      for (int t = 0; t < dimTopics; t++)
++        s.append("  " + getRole(p, t));
++      
++      s.append("\n");
++    }
++    
++    return s.toString();
++  }
+   
+   public String toString()
+   {
+@@ -403,14 +489,14 @@
+       for (int t = 0; t < dimTopics; t++)
+         s.append(" " + solver.getRoles().getNameExtended(getRole(p, t)));
+ 
+-      String tmp = "       " + personSum[p];
++      String tmp = "       " + personSat[p];
+ 
+       s.append(tmp.substring(tmp.length() - 5) + "\n");
+     }
+     
+     s.append(persons.emptyName() + "   " + topics.toHeaderString(" ") + "\n");
+-    s.append("    mittlere Abweichung=" + getMeanDeviation()
+-         + "    maximale Abweichung=" + getMaximumDeviation()  
++    s.append("    mittlere Abweichung=" + getMeanSatisfaction()
++         + "    maximale Abweichung=" + getMinimumSatisfaction()  
+          + "    Standardabw.=" + getStandardDeviation()
+          + "    target=" + calculateTargetValue()
+          + "\n\n");
+
+Modified: trunk/openSess/SolutionPanel.java
+===================================================================
+--- trunk/openSess/SolutionPanel.java	2005-03-20 13:54:06 UTC (rev 18)
++++ trunk/openSess/SolutionPanel.java	2005-04-11 12:11:39 UTC (rev 19)
+@@ -23,7 +23,7 @@
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     27.02.2005
+- * Revision ID: $Id$
++ * Revision ID: $Id: SolutionPanel.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -55,7 +55,8 @@
+   implements ActionListener
+ {
+   private JFrame              frame;
+-  private JFormattedTextField topicClustersField, personAssignmentsField, attemptsField;
++  private JFormattedTextField topicClustersField, personAssignmentsField, 
++                              keepBestField, attemptsField;
+   private JButton             solveButton;
+   private ProgressMonitor     monitor;
+   private Timer               timer;
+@@ -100,7 +101,8 @@
+     NumberFormat intFormat = NumberFormat.getIntegerInstance();
+     JLabel topicClustersLabel     = new JLabel("Topic Clustering Attempts:");
+     JLabel personAssignmentsLabel = new JLabel("Person Assignment Attempts:");
+-    JLabel attemptsLabel          = new JLabel("Assignments Attempts:");
++    JLabel attemptsLabel          = new JLabel("Maximum Assignment Attempts:");
++    JLabel keepBestLabel          = new JLabel("Keep Best Solutions:");
+     topicClustersField = new JFormattedTextField();
+     topicClustersField.setValue(new Integer(5));
+     topicClustersField.setColumns(4);
+@@ -110,6 +112,9 @@
+     attemptsField = new JFormattedTextField();
+     attemptsField.setValue(new Integer(100000));
+     attemptsField.setColumns(8);
++    keepBestField = new JFormattedTextField();
++    keepBestField.setValue(new Integer(10));
++    keepBestField.setColumns(4);
+     
+     JPanel valuePanel = new JPanel();
+     valuePanel.setLayout(new BoxLayout(valuePanel, BoxLayout.LINE_AXIS));
+@@ -121,6 +126,7 @@
+     labelPanel.add(topicClustersLabel);
+     labelPanel.add(personAssignmentsLabel);
+     labelPanel.add(attemptsLabel);
++    labelPanel.add(keepBestLabel);
+     valuePanel.add(Box.createRigidArea(new Dimension(10, 0)));
+     
+     JPanel fieldPanel = new JPanel(new GridLayout(0,1));
+@@ -128,6 +134,7 @@
+     fieldPanel.add(topicClustersField);
+     fieldPanel.add(personAssignmentsField);
+     fieldPanel.add(attemptsField);
++    fieldPanel.add(keepBestField);
+     
+     solveButton = new JButton("Solve");
+     solveButton.setActionCommand("solve");
+@@ -149,14 +156,15 @@
+    * 
+    * @param topicClusters     the number of topic clusterings to try.
+    * @param personAssignments the number of person assignments to try.
+-   * @param attempts          the maximum number of assignment attempts.
++   * @param keepBest          the number of best solutions to keep in the list.
+    */
+   public void setSolutionParameters(int topicClusters, int personAssignments,
+-                                    int attempts)
++                                    int attempts, int keepBest)
+   {
+     topicClustersField.setValue(new Integer(topicClusters));
+     personAssignmentsField.setValue(new Integer(personAssignments));
+     attemptsField.setValue(new Integer(attempts));
++    keepBestField.setValue(new Integer(keepBest));
+   }
+ 
+   /**
+@@ -178,13 +186,22 @@
+   }
+ 
+   /**
+-   * Return the number of assignment attempts.
++   * Return the maximum number of person assignments.
+    * @return the number of assignment attempts.
+    */
+   public int getAttempts()
+   {
+     return getIntFromField(attemptsField);
+   }
++
++  /**
++   * Return the number of best solutions to keep in the list.
++   * @return the number of assignment attempts.
++   */
++  public int getKeepBest()
++  {
++    return getIntFromField(keepBestField);
++  }
+   
+   /**
+    * Get the value of a JFormattedField as an int.
+@@ -216,13 +233,14 @@
+       int topicClusters     = getTopicClusters();
+       int personAssignments = getPersonAssignments();
+       int attempts          = getAttempts();
++      int keepBest          = getKeepBest();
+       
+       monitor = new ProgressMonitor(frame, "Calculating Solutions...", "", 0,
+                                     topicClusters * personAssignments);
+       monitor.setProgress(0);
+       monitor.setMillisToDecideToPopup(0);
+       solveButton.setEnabled(false);
+-      getSolver().startSolverTask(topicClusters, personAssignments, attempts);
++      getSolver().startSolverTask(topicClusters, personAssignments, attempts, keepBest);
+       timer.start();
+       getChangeMonitor().signalChange();
+     }
+
+Modified: trunk/openSess/Solver.java
+===================================================================
+--- trunk/openSess/Solver.java	2005-03-20 13:54:06 UTC (rev 18)
++++ trunk/openSess/Solver.java	2005-04-11 12:11:39 UTC (rev 19)
+@@ -62,7 +62,8 @@
+   private DefaultListModel solutionNames;
+   private int              dimTryTopicClustering;
+   private int              dimTryPersonAssignment;
+-  private int              dimTryAlloc;
++  private int              tries;
++  private int              keepBest;
+   private boolean          debug;
+   private Solution         solution;
+   private int              bestAssignment[][];
+@@ -92,7 +93,7 @@
+ 
+     topics        = new Topics(this, dimTopics);
+     persons       = new Persons(this, dimPersons, dimTopics);
+-    roles         = new Roles(this, dimRoles);
++    roles         = new Roles(dimRoles, dimPersons, dimSessions);
+     solutions     = new Vector();
+     solutionNames = new DefaultListModel();
+   }
+@@ -169,14 +170,53 @@
+   }
+   
+   /**
++   * Set the number of best solutions to keep in the list.
++   * 
++   * @param keepBest the number of best solutions to keep in the list.
++   */
++  public void setKeepBest(int keepBest)
++  {
++    this.keepBest = keepBest;
++  }
++  
++  /**
+    * Add a solution to the list of solutions.
+    * 
+    * @param solution
+    */
+   public void addSolution(Solution solution)
+   {
+-    solutions.addElement(solution);
+-    solutionNames.addElement(solution.getName());
++    
++    // Find the right place to insert the new solution into the sorted list
++    int position = -1;
++    int size = solutions.size();
++    
++    for (int i = 0;  position < 0 && i < size;  ++i)
++     if (solution.greaterThan((Solution)solutions.elementAt(i)))
++       position = i;
++      
++    if (position < 0)
++    {
++      // append at end if required size not yet reached
++      if (size < keepBest)
++      {
++        solutions.addElement(solution);
++        solutionNames.addElement(solution.getName());
++      }
++    }
++    else
++    {
++      // insert at position
++      solutions.insertElementAt(solution, position);
++      solutionNames.insertElementAt(solution.getName(), position);
++
++      // Prune list to required size
++      if (solutions.size() > keepBest)
++      {
++        solutions.removeElementAt(keepBest);
++        solutionNames.removeElementAt(keepBest);
++      }
++    }
+   }
+   
+   /**
+@@ -185,16 +225,19 @@
+    * 
+    * @param dimTryTopicClustering  the number of topic clusterings to try.
+    * @param dimTryPersonAssignment the number of topic/person assignments to try.
+-   * @param dimTryAlloc            the maximum number of assignments to try.
++   * @param tries                  the maximum number of person assignment attempts.
++   * @param keepBest               the number of best solutions to keep in the list.
+    */
+   public void startSolverTask(int dimTryTopicClustering, 
+                              int dimTryPersonAssignment,
+-                             int dimTryAlloc)
++                             int tries,
++                             int keepBest)
+   {
+     final Solver theSolverItself = this;
+-    this.dimTryTopicClustering = dimTryTopicClustering;
+-    this.dimTryPersonAssignment = dimTryPersonAssignment;
+-    this.dimTryAlloc = dimTryAlloc;
++    this.dimTryTopicClustering   = dimTryTopicClustering;
++    this.dimTryPersonAssignment  = dimTryPersonAssignment;
++    this.tries                   = tries;
++    this.keepBest                = keepBest;
+     startTask();
+   }
+   
+@@ -207,7 +250,7 @@
+   protected void doTask()
+   {
+   	// added update of preference index -- GS - 2005-02-22
+-    persons.createPrefInx();
++    persons.createPreferenceIndex();
+     
+ /*    
+     System.out.println("\n" + "Die Personen und ihre Pr?ferenzen:");
+@@ -268,15 +311,15 @@
+           return;
+         
+         // first the assignment is done without a specific role
+-        assignPersonsToSessions(topicGroup, dimTryAlloc, tryP * 4711 + 8812);
++        assignPersonsToSessions(topicGroup, tryP * 4711 + 8812);
+         
+         // thereafter the roles are assigned
+-        assignRoles();
++        assignRolesAlternative();
+ 
+         // System.out.print(pt);
+         
+         if (isValidSolution())
+-          addSolution(createSolution(solutions.size()));
++          addSolution(createSolution(tryT*dimTryPersonAssignment + tryP));
+       }
+     }
+   }
+@@ -345,7 +388,7 @@
+    * @param tries   the maximum number of tries.
+    * @param seed    the seed for the random number generator.
+    */
+-  public void assignPersonsToSessions(int[] groups, int tries, long seed)
++  public void assignPersonsToSessions(int[] groups, long seed)
+   {
+     int     dimPersons     = persons.getNumber();
+     int     dimTopics      = topics.getNumber();
+@@ -644,8 +687,126 @@
+ 		// System.out.println (noStep + " steps performed.");
+   }
+ 
+- 
+   /**
++   * An alternative role assignment algorithm
++   *
++   */
++  public void assignRolesAlternative()
++  {
++    int dimRoles       = getRoles().getNumber();
++    int unassignedRole = dimRoles + 1; // Marker for an unassigned role
++    Random rand = new Random();
++    debug = false;
++    
++    if (debug)
++      System.out.println("Using role shuffling on initial matrix:\n" + solution.debugString());
++
++    // Determine the number of required roles per session (with minimum occurence)
++    int requiredRoles = 0;
++    
++    for (int r=0;  r < roles.getNumber();  ++r)
++      requiredRoles += roles.getMinimumPerSession(r);
++      
++    if (debug)
++    	System.out.println(requiredRoles + " roles are required per session.");
++
++    // Build a pool of possible roles to choose from for non-required roles.
++    Vector rolePool = new Vector();
++    
++    for (int r=0;  r < roles.getNumber();  ++r)
++    {
++      int optional = roles.getMaximumPerSession(r) - roles.getMinimumPerSession(r);
++      
++      for (int i=0;  i < optional;  ++i)
++      	rolePool.add(new Integer(r));
++    }
++
++    if (debug)
++    	System.out.println("For each session, there are " + rolePool.size() + " roles in the pool of optional roles.");
++    
++    // First, we go through each session and assign the roles with a minimum occurence
++    for (int t=0;  t < topics.getNumber();  ++t)
++      for (int r=0;  r < roles.getNumber();  ++r)
++        for (int n=0;  n < roles.getMinimumPerSession(r);  ++n)
++          solution.setRole(chooseMostInterestedPerson(t), t, r+1);
++
++    if (debug)
++    	System.out.println("\nAfter assigning the required roles:\n" + solution.debugString());
++    
++    // Now, we distribute the optional roles for each session
++    for (int t=0;  t < topics.getNumber();  ++t)
++    {
++      // Make a copy of the complete rolePool
++      Vector pool = (Vector) rolePool.clone();
++      
++      // Count the unassigned persons in this session
++      // (this is done to enable this algorithm to cope with a varying 
++      // number of participants per session).
++      int unassigned = 0;
++      
++      for (int p=0;  p < persons.getNumber();  ++p)
++        if (solution.getRole(p, t) == unassignedRole)
++          ++unassigned;
++        
++      // Randomly remove roles from the pool until we have the right number
++      while (pool.size() > unassigned)
++      {
++        int index = rand.nextInt(pool.size());
++        pool.remove(index);
++      }
++
++      if (pool.size() != unassigned)
++        System.out.println("CANNOT HAPPEN: pool size wrong.");
++      
++      // Assign the remaining roles in the pool
++      while (pool.size() > 0)  
++      {
++        int index = rand.nextInt(pool.size());
++        int r     = ((Integer)pool.elementAt(index)).intValue();
++        pool.remove(index);
++        solution.setRole(chooseMostInterestedPerson(t), t, r+1);
++      }
++    }
++    
++    if (debug)
++    	System.out.println("\nAfter assigning the other roles:\n" + solution.debugString());
++    
++    solved = true;
++    debug = false;
++  }
++  
++  /**
++   * Of all the participants in the session for topic t that have
++   * not yet been assigned a role, return the one with the highest 
++   * interest.
++   * 
++   * @param t the topic of the session.
++   * @return the most interested unassigned pearticipant.
++   */
++  protected int chooseMostInterestedPerson(int t)
++  {
++    // Of all the unassigned persons in this session,
++    // pick the one with the highest interest.
++    int dimRoles       = getRoles().getNumber();
++    int unassignedRole = dimRoles + 1; // Marker for an unassigned role
++    int bestPerson = -1;
++    int interest = 99999;
++    
++    for (int p=0;  p < persons.getNumber();  ++p)
++      if (solution.getRole(p, t) == unassignedRole)
++        if (persons.getPreferenceIndex(p, t) < interest)
++        {
++        	bestPerson = p;
++        	interest   = persons.getPreferenceIndex(p, t);
++        }
++        
++    if (bestPerson < 0)
++      System.out.println("CANNOT HAPPEN: no person left to choose.");
++        
++    return bestPerson;
++  }
++
++  /**
+    * Create a Solution object from the current solution.
+    * 
+    * @param index this is the current number of the solution.
+@@ -662,9 +823,9 @@
+     
+     StringBuffer name = new StringBuffer("Solution " + (index+1));
+     name.append(": ");
+-    name.append(compactFormat.format(solution.getMeanDeviation()));
++    name.append(compactFormat.format(solution.getMeanSatisfaction()));
+     name.append(" - ");
+-    name.append(compactFormat.format(solution.getMaximumDeviation()));
++    name.append(compactFormat.format(solution.getMinimumSatisfaction()));
+     name.append(" - ");
+     name.append(compactFormat.format(solution.getStandardDeviation()));
+     solution.setName(name.toString());
+
+Modified: trunk/openSess/SolverConstructor.java
+===================================================================
+--- trunk/openSess/SolverConstructor.java	2005-03-20 13:54:06 UTC (rev 18)
++++ trunk/openSess/SolverConstructor.java	2005-04-11 12:11:39 UTC (rev 19)
+@@ -96,11 +96,19 @@
+     else if (qName.equals("preferredTopic"))
+       solver.getPersons().setPreference(person, ++topic, getInt(attributes, "index", 0));
+     else if (qName.equals("solutionParameters"))
+-      main.setSolutionParameters(getInt(attributes, "topicClusters", 5),
++    {
++      int keepBest = getInt(attributes, "keepBest", 10);
++      solver.setKeepBest(keepBest);
++      main.setSolutionParameters(getInt(attributes, "topicClusters",     5),
+                                  getInt(attributes, "personAssignments", 5),
+-                                 getInt(attributes, "attempts", 100000));
++                                 getInt(attributes, "attempts",          100000),
++                                 keepBest);
++    }
+     else if (qName.equals("solutions"))
++    {
+       solution = 0;
++      solver.getPersons().createPreferenceIndex();
++    }
+     else if (qName.equals("solution"))
+     {
+       currentSolution = new Solution(solver);
+@@ -133,8 +141,17 @@
+     else if (qName.equals("personSums"))
+       person = -1;
+     else if (qName.equals("personSum"))
+-      currentSolution.setPersonSum(++person, getInt(attributes, "sum", 0));
++      currentSolution.setPersonSum(++person, getDouble(attributes, "sum", 0));
+   }
++  /**
++   * Gets called by the SAX implementation when the end of an XML tag
++   * is recognized. 
++   */
++  public void endElement(String uri, String localName, String qName) 
++  {
++    if (qName.equals("solution"))
++      currentSolution.evaluate();
++  }
+   
+   /**
+    * Looks for an attribute with a specified name and returns its value 
+
+
+
+From awickner at sheep.berlios.de  Tue Apr 26 15:54:01 2005
+From: awickner at sheep.berlios.de (Andreas Wickner at BerliOS)
+Date: Tue, 26 Apr 2005 15:54:01 +0200
+Subject: [Opensess-svn] r20 - in trunk: . openSess print
+Message-ID: <200504261354.j3QDs1bk027877@sheep.berlios.de>
+
+Author: awickner
+Date: 2005-04-26 15:53:57 +0200 (Tue, 26 Apr 2005)
+New Revision: 20
+
+Added:
+   trunk/openSess/GenericEditWindow.java
+   trunk/openSess/HTMLPrinter.java
+   trunk/openSess/Locations.java
+   trunk/openSess/Times.java
+   trunk/print/
+   trunk/print/Details.xsl
+   trunk/print/Overview.xsl
+Removed:
+   trunk/openSess/EditTopicWindow.java
+Modified:
+   trunk/openSess/MainWindow.java
+   trunk/openSess/ShowSolutionWindow.java
+   trunk/openSess/Solution.java
+   trunk/openSess/SolutionPanel.java
+   trunk/openSess/Solver.java
+   trunk/openSess/SolverConstructor.java
+Log:
+- Fixed bug in role assignments that produced bad solutions 
+  when different values are specified for minimum and maximum role occurences
+- Initial support for printing (still mostly useless)
+
+Deleted: trunk/openSess/EditTopicWindow.java
+===================================================================
+--- trunk/openSess/EditTopicWindow.java	2005-04-11 12:11:39 UTC (rev 19)
++++ trunk/openSess/EditTopicWindow.java	2005-04-26 13:53:57 UTC (rev 20)
+@@ -1,45 +0,0 @@
+-
+-package openSess;
+-import javax.swing.JFrame;
+-
+-/*
+- * Copyright 2005 Andreas Wickner
+- * 
+- * Created:     15.02.2005
+- * Revision ID: $Id$
+- * 
+- * This file is part of OpenSess.
+- * OpenSess is free software; you can redistribute it and/or modify it 
+- * under the terms of the GNU General Public License as published by 
+- * the Free Software Foundation; either version 2 of the License, or 
+- * (at your option) any later version.
+- *
+- * OpenSess is distributed in the hope that it will be useful, but 
+- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+- * for more details.
+- *
+- * You should have received a copy of the GNU General Public License along 
+- * with OpenSess; if not, write to the Free Software Foundation, Inc., 
+- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
+- */
+-
+-/**
+- * An EditTopicWindow is simply a ListEditWindow.
+- * 
+- * @author andreas
+- */
+-public class EditTopicWindow
+-  extends ListEditWindow
+-{
+-  /**
+-   * Construct a new EditTopicWindow.
+-   * 
+-   * @param frame
+-   */
+-  public EditTopicWindow(JFrame frame)
+-  {
+-    super(frame, "Edit Topic");
+-  }
+-}
+-
+
+Copied: trunk/openSess/GenericEditWindow.java (from rev 10, trunk/openSess/EditTopicWindow.java)
+===================================================================
+--- trunk/openSess/EditTopicWindow.java	2005-03-04 18:45:41 UTC (rev 10)
++++ trunk/openSess/GenericEditWindow.java	2005-04-26 13:53:57 UTC (rev 20)
+@@ -0,0 +1,45 @@
++
++package openSess;
++import javax.swing.JFrame;
++
++/*
++ * Copyright 2005 Andreas Wickner
++ * 
++ * Created:     15.02.2005
++ * Revision ID: $Id$
++ * 
++ * This file is part of OpenSess.
++ * OpenSess is free software; you can redistribute it and/or modify it 
++ * under the terms of the GNU General Public License as published by 
++ * the Free Software Foundation; either version 2 of the License, or 
++ * (at your option) any later version.
++ *
++ * OpenSess is distributed in the hope that it will be useful, but 
++ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
++ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
++ * for more details.
++ *
++ * You should have received a copy of the GNU General Public License along 
++ * with OpenSess; if not, write to the Free Software Foundation, Inc., 
++ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
++ */
++
++/**
++ * An GenericEditWindow is simply a ListEditWindow.
++ * 
++ * @author andreas
++ */
++public class GenericEditWindow
++  extends ListEditWindow
++{
++  /**
++   * Construct a new GenericEditWindow.
++   * 
++   * @param frame
++   */
++  public GenericEditWindow(JFrame frame, String title)
++  {
++    super(frame, title);
++  }
++}
++
+
+Added: trunk/openSess/HTMLPrinter.java
+===================================================================
+--- trunk/openSess/HTMLPrinter.java	2005-04-11 12:11:39 UTC (rev 19)
++++ trunk/openSess/HTMLPrinter.java	2005-04-26 13:53:57 UTC (rev 20)
+@@ -0,0 +1,86 @@
++/*
++ * Copyright 2005 Andreas Wickner
++ * 
++ * Created:     2005-04-19 
++ * Revision ID: $Id$
++ * 
++ * This file is part of OpenSess.
++ * OpenSess is free software; you can redistribute it and/or modify it 
++ * under the terms of the GNU General Public License as published by 
++ * the Free Software Foundation; either version 2 of the License, or 
++ * (at your option) any later version.
++ *
++ * OpenSess is distributed in the hope that it will be useful, but 
++ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
++ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
++ * for more details.
++ *
++ * You should have received a copy of the GNU General Public License along 
++ * with OpenSess; if not, write to the Free Software Foundation, Inc., 
++ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
++ */
++package openSess;
++
++import java.awt.Color;
++import java.awt.Dimension;
++import java.awt.Graphics;
++import java.awt.Graphics2D;
++import java.awt.print.PageFormat;
++import java.awt.print.Printable;
++import java.awt.print.PrinterException;
++import java.io.Serializable;
++
++import javax.swing.JEditorPane;
++import javax.swing.RepaintManager;
++
++/**
++ * @author andreas
++ *
++ */
++public class HTMLPrinter
++  extends JEditorPane 
++  implements Printable, Serializable
++{
++  public HTMLPrinter(String html)
++  {
++    setContentType("text/html");
++    getDocument().putProperty("IgnoreCharsetDirective", new Boolean(true));
++    setText(html);
++    setEditable(false);
++    setSize(500,500);
++  }
++  
++  public int print(Graphics g, PageFormat pf, int pageIndex)
++      throws PrinterException
++  {
++    System.out.println("HTMLPrinter.print");
++    Graphics2D g2 = (Graphics2D) g;
++    g2.setColor(Color.black);
++
++    RepaintManager.currentManager(this).setDoubleBufferingEnabled(false);
++    Dimension d = this.getSize();
++    double panelWidth = d.width;
++    double panelHeight = d.height;
++    System.out.println("w " + panelWidth + ", h " + panelHeight);
++    double pageWidth = pf.getImageableWidth();
++    double pageHeight = pf.getImageableHeight();
++    System.out.println("iw " + pageWidth + ", ih " + pageHeight);
++    double scale = pageWidth / panelWidth;
++    System.out.println("scale " + scale);
++    int totalNumPages = (int) Math.ceil(scale * panelHeight / pageHeight);
++
++    System.out.println("total " + totalNumPages + ", index " + pageIndex);
++    
++    // Check for empty pages
++    if (pageIndex >= totalNumPages)
++      return Printable.NO_SUCH_PAGE;
++
++    g2.translate(pf.getImageableX(), pf.getImageableY());
++    g2.translate(0f, -pageIndex * pageHeight);
++    g2.scale(scale, scale);
++    this.paint(g2);
++
++    return Printable.PAGE_EXISTS;
++  }
++}
++
+
+Added: trunk/openSess/Locations.java
+===================================================================
+--- trunk/openSess/Locations.java	2005-04-11 12:11:39 UTC (rev 19)
++++ trunk/openSess/Locations.java	2005-04-26 13:53:57 UTC (rev 20)
+@@ -0,0 +1,107 @@
++/*
++ * Copyright 2005 Andreas Wickner
++ * 
++ * Created:     2005-04-17 
++ * Revision ID: $Id$
++ * 
++ * This file is part of OpenSess.
++ * OpenSess is free software; you can redistribute it and/or modify it 
++ * under the terms of the GNU General Public License as published by 
++ * the Free Software Foundation; either version 2 of the License, or 
++ * (at your option) any later version.
++ *
++ * OpenSess is distributed in the hope that it will be useful, but 
++ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
++ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
++ * for more details.
++ *
++ * You should have received a copy of the GNU General Public License along 
++ * with OpenSess; if not, write to the Free Software Foundation, Inc., 
++ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
++ */
++package openSess;
++
++import java.io.PrintWriter;
++
++import javax.swing.DefaultListModel;
++
++/**
++ * @author andreas
++ *
++ */
++public class Locations
++  implements XMLStateSaving
++{
++  private DefaultListModel names;
++
++  /**
++   * Constructs a new Locations object.
++   * 
++   * @param dimLocations the number of locations.
++   */
++  public Locations(int dimLocations)
++  {
++    names = new DefaultListModel();
++    
++    for (int p = 0; p < dimLocations; p++)
++      names.addElement("Location " + (p+1));
++  }
++
++
++  /**
++   * Returns the number of locations.
++   * 
++   * @return the number of locations.
++   */
++  public int getNumber()
++  {
++    return names.getSize();
++  }
++  
++  /**
++   * Returns all location names as a DefaultListModel.
++   * 
++   * @return a list of all location names.
++   */
++  public DefaultListModel getNames()
++  {
++    return names;
++  }
++  
++  /**
++   * Returns the name of the location with a given index.
++   * 
++   * @param index the index of the location
++   * @return the name of the location.
++   */
++  public String getName(int index)
++  {
++    return (String)names.getElementAt(index);
++  }
++  
++  /**
++   * Set the name of a location.
++   * 
++   * @param location the location number.
++   * @param name     the new name.
++   */
++  protected void setName(int location, String name)
++  {
++    // set a user?s name
++    names.setElementAt(name, location);
++  }
++  
++  /**
++   * Save the Locations data in XML form.
++   */
++  public void save(PrintWriter stream, int level)
++  {
++    Indenter.println(stream, level, "<locations>");
++
++    for (int p = 0;  p < getNumber();  ++p)
++      Indenter.println(stream, level+1, "<location name=\"" + getName(p) + "\"/>");
++    
++    Indenter.println(stream, level, "</locations>");
++  }
++
++}
+
+Modified: trunk/openSess/MainWindow.java
+===================================================================
+--- trunk/openSess/MainWindow.java	2005-04-11 12:11:39 UTC (rev 19)
++++ trunk/openSess/MainWindow.java	2005-04-26 13:53:57 UTC (rev 20)
+@@ -32,7 +32,7 @@
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     2005-02-12
+- * Revision ID: $Id: MainWindow.java 10 2005-03-04 18:45:41Z awickner $
++ * Revision ID: $Id$
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -66,7 +66,8 @@
+   private final String       fileSuffix  = "ose";
+   private JFrame             frame;
+   private JLabel             configInfo;
+-  private ObjectPanel        topicPanel, personPanel, rolePanel;
++  private ObjectPanel        topicPanel, personPanel, rolePanel, 
++  													 locationPanel, timePanel;
+   private SolutionPanel      solutionPanel;
+   private JFileChooser       fileChooser;
+   private GlobalNewWindow    globalNewWindow;
+@@ -272,7 +273,7 @@
+     rootPanel.add(objectPanel, rc);
+ 
+     // Set up the topic panel
+-    topicPanel = new ObjectPanel("Topics", new EditTopicWindow(frame), solver, this);
++    topicPanel = new ObjectPanel("Topics", new GenericEditWindow(frame, "Edit Topic"), solver, this);
+     objectPanel.add(topicPanel);
+     objectPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+     
+@@ -285,8 +286,16 @@
+     rolePanel = new ObjectPanel("Roles", new EditRoleWindow(frame), solver, this);
+     objectPanel.add(rolePanel);
+ 
++    // Set up the location panel
++    locationPanel = new ObjectPanel("Locations", new GenericEditWindow(frame, "Edit Location"), solver, this);
++    objectPanel.add(locationPanel);
++
++    // Set up the time panel
++    timePanel = new ObjectPanel("Times", new GenericEditWindow(frame, "Edit Time"), solver, this);
++    objectPanel.add(timePanel);
++
+     // Set up the solution panel
+-    solutionPanel = new SolutionPanel(frame, solver, this);
++    solutionPanel = new SolutionPanel(frame, solver, this, this);
+     rc.weighty = 0.0;
+     rootPanel.add(solutionPanel, rc);
+     
+@@ -295,6 +304,8 @@
+     personPanel.addNameChangeListener(listener);
+     topicPanel.addNameChangeListener(listener);
+     rolePanel.addNameChangeListener(listener);
++    locationPanel.addNameChangeListener(listener);
++    timePanel.addNameChangeListener(listener);
+   }
+   
+   /**
+@@ -356,14 +367,14 @@
+       getHelpWindow().setVisible(true);
+     else if (command.equals("about"))
+     {
+-      String date     = getSubversionString("$LastChangedDate: 2005-03-04 18:45:41Z $");
+-      String revision = getSubversionString("$LastChangedRevision: 10 $");
++      String date     = getSubversionString("$LastChangedDate$");
++      String revision = getSubversionString("$LastChangedRevision$");
+       
+       JOptionPane.showMessageDialog(frame,
+                                     programName + "\n\n"	
+                                     + "Version: 0.5 revision " + revision + "\n" 
+                                     + "Created: " + date + "\n" 
+-                                    + "Algorithms: Gero Scholz\n"
++                                    + "Algorithms: Gero Scholz, Andreas Wickner\n"
+                                     + "User Interface: Andreas Wickner");
+     }
+   }
+@@ -395,6 +406,8 @@
+     topicPanel.hideEditor();
+     personPanel.hideEditor();
+     rolePanel.hideEditor();
++    locationPanel.hideEditor();
++    timePanel.hideEditor();
+     solutionPanel.hideEditor();
+     
+     solver = new Solver(topicNumber, personNumber, roleNumber, sessionNumber);
+@@ -403,6 +416,8 @@
+     topicPanel.reconfigure(solver, solver.getTopics().getNames());
+     personPanel.reconfigure(solver, solver.getPersons().getNames());
+     rolePanel.reconfigure(solver, solver.getRoles().getNames());
++    locationPanel.reconfigure(solver, solver.getLocations().getNames());
++    timePanel.reconfigure(solver, solver.getTimes().getNames());
+     solutionPanel.reconfigure(solver, solver.getSolutionNames());
+ 
+     configInfo.setText("Configured for " + topicNumber + " topics, "
+@@ -460,13 +475,12 @@
+       if (currentFile == null)
+         currentFile = new File(fileChooser.getCurrentDirectory(), "untitled." + fileSuffix);
+       
+-      System.out.println("Saving as: " + currentFile.getAbsolutePath());
++      // System.out.println("Saving as: " + currentFile.getAbsolutePath());
+       frame.setTitle(programName + " - " + currentFile.getAbsolutePath());
+       
+       FileWriter writer = new FileWriter(currentFile);
+       PrintWriter stream = new PrintWriter(writer);
+       
+-      stream.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+       save(stream, 0);
+       stream.close();
+       clearChanges();
+@@ -484,6 +498,7 @@
+    */
+   public void save(PrintWriter stream, int level)
+   {
++    stream.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+     stream.println("<openconclave topics=\"" + solver.getTopics().getNumber()
+                    + "\" persons=\"" + solver.getPersons().getNumber()
+                    + "\" roles=\"" + solver.getRoles().getNumber()
+@@ -493,6 +508,8 @@
+     solver.getTopics().save(stream, level+1);
+     solver.getPersons().save(stream, level+1);
+     solver.getRoles().save(stream, level+1);
++    solver.getLocations().save(stream, level+1);
++    solver.getTimes().save(stream, level+1);
+ 
+     Indenter.println(stream, level+1, "<solutionParameters topicClusters=\""
+                      + solutionPanel.getTopicClusters() + "\" personAssignments=\""
+@@ -500,6 +517,9 @@
+                      + solutionPanel.getAttempts() + "\" keepBest=\""
+                      + solutionPanel.getKeepBest() + "\"/>");
+     
++    Indenter.println(stream, level+1, "<selectedSolution index=\""
++                     + solutionPanel.getList().getSelectedIndex() + "\"/>");
++                     		
+     Indenter.println(stream, level+1, "<solutions>");
+     
+     Vector solutions = solver.getSolutions();
+
+Modified: trunk/openSess/ShowSolutionWindow.java
+===================================================================
+--- trunk/openSess/ShowSolutionWindow.java	2005-04-11 12:11:39 UTC (rev 19)
++++ trunk/openSess/ShowSolutionWindow.java	2005-04-26 13:53:57 UTC (rev 20)
+@@ -18,7 +18,7 @@
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     19.02.2005
+- * Revision ID: $Id: ShowSolutionWindow.java 10 2005-03-04 18:45:41Z awickner $
++ * Revision ID: $Id$
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -143,8 +143,11 @@
+     this.solver = solver;
+     this.selected = selected;
+     
+-    Topics topics = solver.getTopics();
+-    Persons persons = solver.getPersons();
++    Topics    topics    = solver.getTopics();
++    Persons   persons   = solver.getPersons();
++    Locations locations = solver.getLocations();
++    Times     times     = solver.getTimes();
++    
+     int tNumber = topics.getNumber();   // Number of topics
+     int pNumber = persons.getNumber();  // Number of persons
+     int sNumber = solver.getSessionNumber();   // Number of sessions
+@@ -182,12 +185,12 @@
+         if (g == 0)  // Column headers
+         {
+           if (s > 0)
+-            label.setText("Session " + s);
++            label.setText(locations.getName(s-1));
+         }
+         else if (s == 0)  // Row headers
+         {
+           if (g > 0)
+-            label.setText("Group " + g);
++            label.setText(times.getName(g-1));
+         }
+       }
+      
+@@ -324,7 +327,7 @@
+     
+     public void nameChanged(int index, String oldName, String newName)
+     {
+-      System.out.println("Solution update on name change " + oldName + " -> " + newName);
++      // System.out.println("Solution update on name change " + oldName + " -> " + newName);
+       window.update();
+     }
+   }
+
+Modified: trunk/openSess/Solution.java
+===================================================================
+--- trunk/openSess/Solution.java	2005-04-11 12:11:39 UTC (rev 19)
++++ trunk/openSess/Solution.java	2005-04-26 13:53:57 UTC (rev 20)
+@@ -6,7 +6,7 @@
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     18.02.2005
+- * Revision ID: $Id: Solution.java 10 2005-03-04 18:45:41Z awickner $
++ * Revision ID: $Id$
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -162,9 +162,12 @@
+     if (this == other)
+       return false;  // identical
+     
+-    if (this.getMeanSatisfaction() > other.getMeanSatisfaction())
++    int thisMean = (int)(this.getMeanSatisfaction() * 1000);
++    int otherMean = (int)(other.getMeanSatisfaction() * 1000);
++    
++    if (thisMean > otherMean)
+       return true;
+-    else if (this.getMeanSatisfaction() < other.getMeanSatisfaction())
++    else if (thisMean < otherMean)
+       return false;
+     
+     // same mean deviation, compare max deviation
+
+Modified: trunk/openSess/SolutionPanel.java
+===================================================================
+--- trunk/openSess/SolutionPanel.java	2005-04-11 12:11:39 UTC (rev 19)
++++ trunk/openSess/SolutionPanel.java	2005-04-26 13:53:57 UTC (rev 20)
+@@ -1,9 +1,18 @@
+ package openSess;
++
+ import java.awt.Component;
+ import java.awt.Dimension;
+ import java.awt.GridLayout;
+ import java.awt.event.ActionEvent;
+ import java.awt.event.ActionListener;
++import java.awt.print.PrinterJob;
++import java.io.File;
++import java.io.FileWriter;
++import java.io.IOException;
++import java.io.PrintWriter;
++import java.io.StringReader;
++import java.io.StringWriter;
++import java.net.URISyntaxException;
+ import java.text.NumberFormat;
+ import java.text.ParseException;
+ 
+@@ -11,72 +20,87 @@
+ import javax.swing.Box;
+ import javax.swing.BoxLayout;
+ import javax.swing.JButton;
++import javax.swing.JComboBox;
+ import javax.swing.JFormattedTextField;
+ import javax.swing.JFrame;
+ import javax.swing.JLabel;
++import javax.swing.JOptionPane;
+ import javax.swing.JPanel;
+ import javax.swing.JScrollPane;
+ import javax.swing.ProgressMonitor;
+ import javax.swing.Timer;
++import javax.xml.transform.Transformer;
++import javax.xml.transform.TransformerConfigurationException;
++import javax.xml.transform.TransformerException;
++import javax.xml.transform.TransformerFactory;
++import javax.xml.transform.stream.StreamResult;
++import javax.xml.transform.stream.StreamSource;
+ 
+ /*
+  * Copyright 2005 Andreas Wickner
+  * 
+- * Created:     27.02.2005
+- * Revision ID: $Id: SolutionPanel.java 10 2005-03-04 18:45:41Z awickner $
++ * Created: 27.02.2005 Revision ID: $Id: SolutionPanel.java 10 2005-03-04
++ * 18:45:41Z awickner $
+  * 
+- * This file is part of OpenSess.
+- * OpenSess is free software; you can redistribute it and/or modify it 
+- * under the terms of the GNU General Public License as published by 
+- * the Free Software Foundation; either version 2 of the License, or 
+- * (at your option) any later version.
+- *
+- * OpenSess is distributed in the hope that it will be useful, but 
+- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+- * for more details.
+- *
+- * You should have received a copy of the GNU General Public License along 
+- * with OpenSess; if not, write to the Free Software Foundation, Inc., 
+- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
++ * This file is part of OpenSess. OpenSess is free software; you can
++ * redistribute it and/or modify it under the terms of the GNU General Public
++ * License as published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ * 
++ * OpenSess is distributed in the hope that it will be useful, but WITHOUT ANY
++ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
++ * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
++ * 
++ * You should have received a copy of the GNU General Public License along with
++ * OpenSess; if not, write to the Free Software Foundation, Inc., 59 Temple
++ * Place, Suite 330, Boston, MA 02111-1307 USA
+  */
+ 
+ /**
+- * The SolutionPanel is a BorderedListPanel with additional
+- * JTextFields for the calculation parameters and a button
+- * to start the calculation. If this button is pressed,
+- * the calculation is started in a separate task and the progress
+- * is monitored with ProgressMonitor.
++ * The SolutionPanel is a BorderedListPanel with additional JTextFields for the
++ * calculation parameters and a button to start the calculation. If this button
++ * is pressed, the calculation is started in a separate task and the progress is
++ * monitored with ProgressMonitor.
+  * 
+  * @author andreas
+  */
+ public class SolutionPanel
+-  extends BorderedListPanel
+-  implements ActionListener
++    extends BorderedListPanel
++    implements ActionListener
+ {
+   private JFrame              frame;
+-  private JFormattedTextField topicClustersField, personAssignmentsField, 
+-                              keepBestField, attemptsField;
++  private JFormattedTextField topicClustersField, personAssignmentsField, keepBestField,
++      attemptsField;
+   private JButton             solveButton;
++  private JComboBox           printFormatList;
+   private ProgressMonitor     monitor;
+   private Timer               timer;
+-
++  private String              printDirPath = "../print";
++  private XMLStateSaving      stateSaver;
++  
++  
+   /**
+-   * Construct a new SolutionPanel that is a child of the specified
+-   * JFrame and associated with a Solver object and a ChangeMonitor.
++   * Construct a new SolutionPanel that is a child of the specified JFrame and
++   * associated with a Solver object and a ChangeMonitor.
+    * 
+-   * @param frame   the JFrame.
+-   * @param solver  the Solver object.
+-   * @param monitor the ChangeMonitor.
++   * @param frame
++   *          the JFrame.
++   * @param solver
++   *          the Solver object.
++   * @param monitor
++   *          the ChangeMonitor.
+    */
+-  public SolutionPanel(JFrame frame, Solver solver, ChangeMonitor monitor)
++  public SolutionPanel(JFrame frame, Solver solver, ChangeMonitor monitor,
++                       XMLStateSaving stateSaver)
+   {
+     super("Solutions", solver, monitor, new ShowSolutionWindow(frame),
+           BoxLayout.LINE_AXIS);
+-    this.frame = frame;
+-
++    this.frame      = frame;
++    this.stateSaver = stateSaver;
++    
+     // Create a timer for monitoring calculations
+     timer = new Timer(500, new TimerListener());
++
+     
+     // Set up the solution list
+     JPanel solListPanel = new JPanel();
+@@ -90,19 +114,19 @@
+     showButton.addActionListener(this);
+     showButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+     solListPanel.add(showButton);
+-    
++
+     add(solListPanel);
+     add(Box.createRigidArea(new Dimension(10, 0)));
+ 
+     // Set up the solution parameter panel
+     JPanel solparPanel = new JPanel();
+     solparPanel.setLayout(new BoxLayout(solparPanel, BoxLayout.PAGE_AXIS));
+-    
++
+     NumberFormat intFormat = NumberFormat.getIntegerInstance();
+-    JLabel topicClustersLabel     = new JLabel("Topic Clustering Attempts:");
++    JLabel topicClustersLabel = new JLabel("Topic Clustering Attempts:");
+     JLabel personAssignmentsLabel = new JLabel("Person Assignment Attempts:");
+-    JLabel attemptsLabel          = new JLabel("Maximum Assignment Attempts:");
+-    JLabel keepBestLabel          = new JLabel("Keep Best Solutions:");
++    JLabel attemptsLabel = new JLabel("Maximum Assignment Attempts:");
++    JLabel keepBestLabel = new JLabel("Keep Best Solutions:");
+     topicClustersField = new JFormattedTextField();
+     topicClustersField.setValue(new Integer(5));
+     topicClustersField.setColumns(4);
+@@ -115,48 +139,96 @@
+     keepBestField = new JFormattedTextField();
+     keepBestField.setValue(new Integer(10));
+     keepBestField.setColumns(4);
+-    
++
+     JPanel valuePanel = new JPanel();
+     valuePanel.setLayout(new BoxLayout(valuePanel, BoxLayout.LINE_AXIS));
+-    valuePanel.setBorder(BorderFactory.createEmptyBorder(10,0,10,0));
++    valuePanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+     solparPanel.add(valuePanel);
+-    
+-    JPanel labelPanel = new JPanel(new GridLayout(0,1));
++
++    JPanel labelPanel = new JPanel(new GridLayout(0, 1));
+     valuePanel.add(labelPanel);
+     labelPanel.add(topicClustersLabel);
+     labelPanel.add(personAssignmentsLabel);
+     labelPanel.add(attemptsLabel);
+     labelPanel.add(keepBestLabel);
+     valuePanel.add(Box.createRigidArea(new Dimension(10, 0)));
+-    
+-    JPanel fieldPanel = new JPanel(new GridLayout(0,1));
++
++    JPanel fieldPanel = new JPanel(new GridLayout(0, 1));
+     valuePanel.add(fieldPanel);
+     fieldPanel.add(topicClustersField);
+     fieldPanel.add(personAssignmentsField);
+     fieldPanel.add(attemptsField);
+     fieldPanel.add(keepBestField);
+-    
++
+     solveButton = new JButton("Solve");
+     solveButton.setActionCommand("solve");
+     solveButton.addActionListener(this);
+     solveButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+     solparPanel.add(solveButton);
++    solparPanel.add(Box.createRigidArea(new Dimension(0, 10)));
++
++    JLabel printFormatLabel = new JLabel("Print format:");
++    printFormatLabel.setMaximumSize(new Dimension(Short.MAX_VALUE,
++                                      Short.MAX_VALUE));    
++    printFormatLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
++    solparPanel.add(printFormatLabel);
+     
++    printFormatList = new JComboBox();
++    getPrintFormats();  // Read available print formats
++    printFormatList.addActionListener(this);
++    printFormatList.setAlignmentX(Component.CENTER_ALIGNMENT);
++    solparPanel.add(printFormatList);
++    solparPanel.add(Box.createRigidArea(new Dimension(0, 10)));
++
++    JButton printButton = new JButton("Print");
++    printButton.setActionCommand("print");
++    printButton.addActionListener(this);
++    printButton.setAlignmentX(Component.CENTER_ALIGNMENT);
++    solparPanel.add(printButton);
++    
+     Dimension minSize = new Dimension(0, 0);
+     Dimension prefSize = new Dimension(0, Short.MAX_VALUE);
+     solparPanel.add(new Box.Filler(minSize, prefSize, prefSize));
+-    // solparPanel.add(Box.createVerticalGlue());
+     add(solparPanel);
+   }
++
++  /**
++   * Read the list of available print formats.
++   *
++   */
++  protected void getPrintFormats()
++  {
++    try
++    {
++      // Locate the print directory and get the contained files
++      File printDir = new File(getClass().getResource(printDirPath).toURI());
++      String files[] = printDir.list();
++
++      for (int n = 0; n < files.length; ++n)
++        if (files[n].endsWith(".xsl"))
++        {
++          int p = files[n].lastIndexOf(".xsl");
++          String format = files[n].substring(0, p);
++          printFormatList.addItem(format);
++        }
++    }
++    catch (URISyntaxException e)
++    {
++      System.out.println("Problem reading print formats: URL -> URI conversion.");
++    }
++  }
+   
+   /**
+-   * Sets the parameters for solution finding.
+-   * The number of solutions will usually be topicClusters*personAssignments,
+-   * but might be slightly less if some solution attempts were not successful.
++   * Sets the parameters for solution finding. The number of solutions will
++   * usually be topicClusters*personAssignments, but might be slightly less if
++   * some solution attempts were not successful.
+    * 
+-   * @param topicClusters     the number of topic clusterings to try.
+-   * @param personAssignments the number of person assignments to try.
+-   * @param keepBest          the number of best solutions to keep in the list.
++   * @param topicClusters
++   *          the number of topic clusterings to try.
++   * @param personAssignments
++   *          the number of person assignments to try.
++   * @param keepBest
++   *          the number of best solutions to keep in the list.
+    */
+   public void setSolutionParameters(int topicClusters, int personAssignments,
+                                     int attempts, int keepBest)
+@@ -169,6 +241,7 @@
+ 
+   /**
+    * Return the number of topic clusters.
++   * 
+    * @return the number of topic clusters.
+    */
+   public int getTopicClusters()
+@@ -178,6 +251,7 @@
+ 
+   /**
+    * Return the number of person assignments.
++   * 
+    * @return the number of person assignments.
+    */
+   public int getPersonAssignments()
+@@ -187,6 +261,7 @@
+ 
+   /**
+    * Return the maximum number of person assignments.
++   * 
+    * @return the number of assignment attempts.
+    */
+   public int getAttempts()
+@@ -196,17 +271,19 @@
+ 
+   /**
+    * Return the number of best solutions to keep in the list.
++   * 
+    * @return the number of assignment attempts.
+    */
+   public int getKeepBest()
+   {
+     return getIntFromField(keepBestField);
+   }
+-  
++
+   /**
+    * Get the value of a JFormattedField as an int.
+    * 
+-   * @param field the field.
++   * @param field
++   *          the field.
+    * @return the value, converted to int.
+    */
+   protected int getIntFromField(JFormattedTextField field)
+@@ -218,61 +295,180 @@
+     catch (ParseException ex)
+     {
+     }
+-    
+-    return ((Integer)field.getValue()).intValue();
++
++    return ((Integer) field.getValue()).intValue();
+   }
+-  
++
+   /**
+-   * Process the command "solve" which start a calculation and
+-   * forward all other commands to the base class.
++   * Process the command "solve" which start a calculation and forward all other
++   * commands to the base class.
+    */
+   public void processCommand(String command)
+   {
+     if (command.equals("solve"))
+     {
+-      int topicClusters     = getTopicClusters();
+-      int personAssignments = getPersonAssignments();
+-      int attempts          = getAttempts();
+-      int keepBest          = getKeepBest();
+-      
+-      monitor = new ProgressMonitor(frame, "Calculating Solutions...", "", 0,
+-                                    topicClusters * personAssignments);
+-      monitor.setProgress(0);
+-      monitor.setMillisToDecideToPopup(0);
+-      solveButton.setEnabled(false);
+-      getSolver().startSolverTask(topicClusters, personAssignments, attempts, keepBest);
+-      timer.start();
+-      getChangeMonitor().signalChange();
++      if (checkConstraints())
++      {
++        int topicClusters = getTopicClusters();
++        int personAssignments = getPersonAssignments();
++        int attempts = getAttempts();
++        int keepBest = getKeepBest();
++
++        monitor = new ProgressMonitor(frame, "Calculating Solutions...", "", 0,
++                                      topicClusters * personAssignments);
++        monitor.setProgress(0);
++        monitor.setMillisToDecideToPopup(0);
++        solveButton.setEnabled(false);
++        getSolver().startSolverTask(topicClusters, personAssignments, attempts, keepBest);
++        timer.start();
++        getChangeMonitor().signalChange();
++      }
+     }
++    else if (command.equals("print"))
++    {
++      try
++      {
++        // get selected print format
++        String printFormat = (String) printFormatList.getSelectedItem();
++        String formatterPath = printDirPath + "/" + printFormat + ".xsl";
++        File printFormatter = new File(getClass().getResource(formatterPath).toURI());
++        
++        TransformerFactory transFactory = TransformerFactory.newInstance();
++        Transformer transformer = transFactory.newTransformer(new StreamSource(printFormatter));
++        
++        // turn our internal state into an XML string
++        StringWriter xmlState = new StringWriter();
++        PrintWriter  xmlWriter = new PrintWriter(xmlState);
++        stateSaver.save(xmlWriter, 0);
++        
++        // Construct a Transformer source that contains the XML string
++        StreamSource source = new StreamSource(new StringReader(xmlState.toString()));
++        
++        // Construct a Result that writes to a string
++        StringWriter htmlData = new StringWriter();
++        StreamResult result = new StreamResult(htmlData);
++        
++        // Create the HTML document
++        transformer.transform(source, result);
++
++        FileWriter testWriter = new FileWriter("test.html");
++        PrintWriter testStream = new PrintWriter(testWriter);
++        testStream.println(htmlData.toString());
++        testStream.close();
++        
++        // Construct the printable object from the HTML string
++        HTMLPrinter htmlPrinter = new HTMLPrinter(htmlData.toString());
++
++        PrinterJob job = PrinterJob.getPrinterJob();
++        job.setPrintable(htmlPrinter);
++        
++        if (job.printDialog()) /* Displays the standard system print dialog */
++        {
++          try
++          {
++            job.print();
++          }
++          catch (Exception ex)
++          {
++            System.out.println(ex);
++          }
++        }
++      }
++      catch (URISyntaxException e)
++      {
++        System.out.println("Problem using print format: " + e);
++      }
++      catch (IOException e)
++      {
++        System.out.println("I/O-Problem: " + e);
++      }
++      catch (TransformerConfigurationException e)
++      {
++        System.out.println("Cannot create transformer: " + e);
++      }
++      catch (TransformerException e)
++      {
++        System.out.println("TransformerException: " + e);
++      }
++    }
+     else
+       super.processCommand(command);
+   }
+-  
+ 
+   /**
+-   * This class is an ActionListener which is only triggered for timer
+-   * events. It is used to provide feedback on the progress of a 
+-   * solution calculation and also detects when the calculation is
+-   * finished.
++   * Check any constraints that must be met on order for the calculation to work
++   * as expected.
++   * 
++   * @return true if the constraints are met, false otherwise.
+    */
++  protected boolean checkConstraints()
++  {
++    boolean ok = true;
++    StringBuffer msg = new StringBuffer("The following constraints are violated:\n");
++    Solver solver = getSolver();
++    Roles roles = solver.getRoles();
++    int dimRoles = roles.getNumber();
++    int dimPersons = solver.getPersons().getNumber();
++    int dimSessions = solver.getSessionNumber();
++    int minSum = 0;
++    int maxSum = 0;
++    int perSession = dimPersons / dimSessions;
++
++    for (int r = 0; r < dimRoles; ++r)
++    {
++      minSum += roles.getMinimumPerSession(r);
++      maxSum += roles.getMaximumPerSession(r);
++    }
++
++    if (maxSum < perSession)
++    {
++      ok = false;
++      msg.append("  - The sum of the role maxima (" + maxSum
++                 + ") is less than\n    the number of participants per session ("
++                 + perSession + ")\n");
++    }
++
++    if (minSum > perSession)
++    {
++      ok = false;
++      msg.append("  - The sum of the role minima (" + minSum
++                 + ") exceeds\n    the number of participants per session (" + perSession
++                 + ")\n");
++    }
++
++    if (!ok)
++    {
++      msg.append("Please correct these problems before trying again.");
++      JOptionPane.showMessageDialog(this, msg, "Constraint Violation",
++                                    JOptionPane.ERROR_MESSAGE);
++    }
++
++    return ok;
++  }
++
++  /**
++   * This class is an ActionListener which is only triggered for timer events.
++   * It is used to provide feedback on the progress of a solution calculation
++   * and also detects when the calculation is finished.
++   */
+   private class TimerListener
+-    implements ActionListener
++      implements ActionListener
+   {
+     /**
+-     * When called, update the progress bar of the ProgressMonitor
+-     * and display any progress messages. If the calculation has
+-     * been canceled or terminated, do the neccessary cleanup work.
++     * When called, update the progress bar of the ProgressMonitor and display
++     * any progress messages. If the calculation has been canceled or
++     * terminated, do the neccessary cleanup work.
+      */
+     public void actionPerformed(ActionEvent e)
+     {
+       Solver solver = getSolver();
+       monitor.setProgress(solver.getCurrent());
+       String s = solver.getMessage();
+-      
+-      if (s != null) 
++
++      if (s != null)
+         monitor.setNote(s);
+ 
+-      if (monitor.isCanceled() || solver.isDone()) 
++      if (monitor.isCanceled() || solver.isDone())
+       {
+         monitor.close();
+         solver.stop();
+
+Modified: trunk/openSess/Solver.java
+===================================================================
+--- trunk/openSess/Solver.java	2005-04-11 12:11:39 UTC (rev 19)
++++ trunk/openSess/Solver.java	2005-04-26 13:53:57 UTC (rev 20)
+@@ -2,7 +2,7 @@
+  * Copyright 2005 Gero Scholz, Andreas Wickner
+  * 
+  * Created:     2005-02-11 
+- * Revision ID: $Id: Solver.java 10 2005-03-04 18:45:41Z awickner $
++ * Revision ID: $Id$
+  * 
+  * 2005-02-14/AW: Changes to decrease excessive memory allocation/deallocation
+  * 2005-02-22/GS: Algorithm bug fixes
+@@ -58,6 +58,8 @@
+   private Topics           topics;
+   private Persons          persons;
+   private Roles            roles;
++  private Locations        locations;
++  private Times            times;
+   private Vector           solutions;
+   private DefaultListModel solutionNames;
+   private int              dimTryTopicClustering;
+@@ -72,6 +74,7 @@
+   private int              seqPersons[][];
+   private NumberFormat     compactFormat;
+   private boolean          solved;
++  private int              candidates[];
+   
+   /*
+    * currently there is a tendency to find an ideal solution for some persons
+@@ -94,8 +97,11 @@
+     topics        = new Topics(this, dimTopics);
+     persons       = new Persons(this, dimPersons, dimTopics);
+     roles         = new Roles(dimRoles, dimPersons, dimSessions);
++    locations     = new Locations(dimSessions);
++    times         = new Times(dimPersons / dimSessions);
+     solutions     = new Vector();
+     solutionNames = new DefaultListModel();
++    candidates    = new int[dimPersons];
+   }
+ 
+   /**
+@@ -150,6 +156,26 @@
+   }
+   
+   /**
++   * Return the number of locations.
++   * 
++   * @return the number of locations.
++   */
++  public Locations getLocations()
++  {
++    return locations;
++  }
++  
++  /**
++   * Return the number of times.
++   * 
++   * @return the number of times.
++   */
++  public Times getTimes()
++  {
++    return times;
++  }
++  
++  /**
+    * Return the list of solutions.
+    * 
+    * @return the list of solutions.
+@@ -357,8 +383,8 @@
+     
+     // Prepare a number formatter
+     compactFormat = NumberFormat.getInstance();
+-    compactFormat.setMinimumFractionDigits(2);
+-    compactFormat.setMaximumFractionDigits(2);
++    compactFormat.setMinimumFractionDigits(3);
++    compactFormat.setMaximumFractionDigits(3);
+     
+     if (debug)
+     {
+@@ -724,21 +750,22 @@
+     if (debug)
+     	System.out.println("For each session, there are " + rolePool.size() + " roles in the pool of optional roles.");
+     
+-    // First, we go through each session and assign the roles with a minimum occurence
+-    for (int t=0;  t < topics.getNumber();  ++t)
+-      for (int r=0;  r < roles.getNumber();  ++r)
+-        for (int n=0;  n < roles.getMinimumPerSession(r);  ++n)
+-          solution.setRole(chooseMostInterestedPerson(t), t, r+1);
+-
+-    if (debug)
+-    	System.out.println("\nAfter assigning the required roles:\n" + solution.debugString());
++    // Prepare the vector which tells us how many copies of each
++    // role should be assigned in a session
++    int rolesToAssign[] = new int[dimRoles];
+     
+-    // Now, we distribute the optional roles for each session
++    // We iterate over all sessions to assign the roles
+     for (int t=0;  t < topics.getNumber();  ++t)
+     {
+-      // Make a copy of the complete rolePool
+-      Vector pool = (Vector) rolePool.clone();
++      int minimumRoles = 0;
+       
++      // Initialise the role array with the minimum numbers.
++      for (int r=0;  r < dimRoles;  ++r)
++      {
++        rolesToAssign[r] = roles.getMinimumPerSession(r);
++        minimumRoles += rolesToAssign[r];
++      }
++      
+       // Count the unassigned persons in this session
+       // (this is done to enable this algorithm to cope with a varying 
+       // number of participants per session).
+@@ -747,25 +774,33 @@
+       for (int p=0;  p < persons.getNumber();  ++p)
+         if (solution.getRole(p, t) == unassignedRole)
+           ++unassigned;
+-        
+-      // Randomly remove roles from the pool until we have the right number
+-      while (pool.size() > unassigned)
+-      {
+-        int index = rand.nextInt(pool.size());
+-        pool.remove(index);
+-      }
++    
++      int optionalRoles = unassigned - minimumRoles;
++      
++      if (debug)
++      	System.out.println("For session " + t + " there are " + optionalRoles + 
++      	                   " optional roles to pick.");
++      
++      // Pick the optional roles randomly and increase rolesToAssign accordingly
++      // First, make a copy of the complete rolePool
++      Vector pool = (Vector) rolePool.clone();
++      
++      if (optionalRoles > pool.size())
++        System.out.println("CANNOT HAPPEN: pool size wrong.");
+ 
+-      if (pool.size() != unassigned)
+-        System.out.println("CANNOT HAPPEN: pool size wrong.");
+-      
+-      // Assign the remaining roles in the pool
+-      while (pool.size() > 0)  
++      for (int n=0;  n < optionalRoles;  ++n)  
+       {
+         int index = rand.nextInt(pool.size());
+         int r     = ((Integer)pool.elementAt(index)).intValue();
+         pool.remove(index);
+-        solution.setRole(chooseMostInterestedPerson(t), t, r+1);
++        ++rolesToAssign[r];
+       }
++
++      // Now we know what roles must be assigned.
++      // Do it by picking the participants that are most interested.
++      for (int r=0;  r < dimRoles;  ++r)
++        for (int n=0;  n < rolesToAssign[r];  ++n)
++          solution.setRole(chooseMostInterestedPerson(t, rand), t, r+1);
+     }
+     
+     if (debug)
+@@ -783,27 +818,34 @@
+    * @param t the topic of the session.
+    * @return the most interested unassigned pearticipant.
+    */
+-  protected int chooseMostInterestedPerson(int t)
++  protected int chooseMostInterestedPerson(int t, Random rand)
+   {
+     // Of all the unassigned persons in this session,
+     // pick the one with the highest interest.
+     int dimRoles       = getRoles().getNumber();
+     int unassignedRole = dimRoles + 1; // Marker for an unassigned role
+-    int bestPerson = -1;
+     int interest = 99999;
++    int dimCandidates = 0;
+     
+     for (int p=0;  p < persons.getNumber();  ++p)
+       if (solution.getRole(p, t) == unassignedRole)
+-        if (persons.getPreferenceIndex(p, t) < interest)
++      {
++        int pInterest = persons.getPreferenceIndex(p, t);
++        
++        if (pInterest < interest)
+         {
+-        	bestPerson = p;
+-        	interest   = persons.getPreferenceIndex(p, t);
++          dimCandidates = 0;
++          candidates[dimCandidates++] = p;
++        	interest   = pInterest;
+         }
+-        
+-    if (bestPerson < 0)
++        else if (pInterest == interest)
++          candidates[dimCandidates++] = p;
++      }
++      
++    if (dimCandidates <= 0)
+       System.out.println("CANNOT HAPPEN: no person left to choose.");
+         
+-    return bestPerson;
++    return candidates[rand.nextInt(dimCandidates)];
+   }
+ 
+   /**
+
+Modified: trunk/openSess/SolverConstructor.java
+===================================================================
+--- trunk/openSess/SolverConstructor.java	2005-04-11 12:11:39 UTC (rev 19)
++++ trunk/openSess/SolverConstructor.java	2005-04-26 13:53:57 UTC (rev 20)
+@@ -6,7 +6,7 @@
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     21.02.2005
+- * Revision ID: $Id: SolverConstructor.java 10 2005-03-04 18:45:41Z awickner $
++ * Revision ID: $Id$
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -38,6 +38,8 @@
+   private int        topic      = 0;
+   private int        person     = 0;
+   private int        role       = 0;
++  private int        location   = 0;
++  private int        time       = 0;
+   private int        solution   = 0;
+   private int        group      = 0;
+   private int        groupIndex = 0;
+@@ -93,6 +95,14 @@
+       roles.setMinimumPerSession(role, getInt(attributes, "min", minmax));
+       roles.setMaximumPerSession(role, getInt(attributes, "max", minmax));
+     }
++    else if (qName.equals("locations"))
++      location = -1;
++    else if (qName.equals("location"))
++      solver.getLocations().setName(++location, getString(attributes, "name", location));
++    else if (qName.equals("times"))
++      time = -1;
++    else if (qName.equals("time"))
++      solver.getTimes().setName(++time, getString(attributes, "name", time));
+     else if (qName.equals("preferredTopic"))
+       solver.getPersons().setPreference(person, ++topic, getInt(attributes, "index", 0));
+     else if (qName.equals("solutionParameters"))
+
+Added: trunk/openSess/Times.java
+===================================================================
+--- trunk/openSess/Times.java	2005-04-11 12:11:39 UTC (rev 19)
++++ trunk/openSess/Times.java	2005-04-26 13:53:57 UTC (rev 20)
+@@ -0,0 +1,105 @@
++/*
++ * Copyright 2005 Andreas Wickner
++ * 
++ * Created:     2005-04-17 
++ * Revision ID: $Id$
++ * 
++ * This file is part of OpenSess.
++ * OpenSess is free software; you can redistribute it and/or modify it 
++ * under the terms of the GNU General Public License as published by 
++ * the Free Software Foundation; either version 2 of the License, or 
++ * (at your option) any later version.
++ *
++ * OpenSess is distributed in the hope that it will be useful, but 
++ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
++ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
++ * for more details.
++ *
++ * You should have received a copy of the GNU General Public License along 
++ * with OpenSess; if not, write to the Free Software Foundation, Inc., 
++ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
++ */
++package openSess;
++
++import java.io.PrintWriter;
++
++import javax.swing.DefaultListModel;
++
++/**
++ * @author andreas
++ *
++ */
++public class Times
++  implements XMLStateSaving
++{
++  private DefaultListModel names;
++
++  /**
++   * Constructs a new Times object.
++   * 
++   * @param dimTimes the number of times.
++   */
++  public Times(int dimTimes)
++  {
++    names = new DefaultListModel();
++    
++    for (int p = 0; p < dimTimes; p++)
++      names.addElement("Time " + (p+1));
++  }
++
++
++  /**
++   * Returns the number of times.
++   * 
++   * @return the number of times.
++   */
++  public int getNumber()
++  {
++    return names.getSize();
++  }
++  
++  /**
++   * Returns all time names as a DefaultListModel.
++   * 
++   * @return a list of all time names.
++   */
++  public DefaultListModel getNames()
++  {
++    return names;
++  }
++  
++  /**
++   * Returns the name of the time with a given index.
++   * 
++   * @param index the index of the time
++   * @return the name of the time.
++   */
++  public String getName(int index)
++  {
++    return (String)names.getElementAt(index);
++  }
++  
++  /**
++   * Set the name of a time.
++   * 
++   * @param time the time number.
++   * @param name     the new name.
++   */
++  protected void setName(int time, String name)
++  {
++    names.setElementAt(name, time);
++  }
++  
++  /**
++   * Save the Times data in XML form.
++   */
++  public void save(PrintWriter stream, int level)
++  {
++    Indenter.println(stream, level, "<times>");
++
++    for (int p = 0;  p < getNumber();  ++p)
++      Indenter.println(stream, level+1, "<time name=\"" + getName(p) + "\"/>");
++    
++    Indenter.println(stream, level, "</times>");
++  }
++}
+
+Added: trunk/print/Details.xsl
+===================================================================
+
+Added: trunk/print/Overview.xsl
+===================================================================
+--- trunk/print/Overview.xsl	2005-04-11 12:11:39 UTC (rev 19)
++++ trunk/print/Overview.xsl	2005-04-26 13:53:57 UTC (rev 20)
+@@ -0,0 +1,79 @@
++<xsl:stylesheet version = '1.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>
++
++<xsl:variable name="sessions" select="/openconclave/@sessions"/>
++<xsl:variable name="s" select="//selectedSolution/@index"/>
++<xsl:variable name="sol" select="//solution[position() = $s]"/>
++
++<xsl:template match="/">
++  <html>
++  <head>
++    <title>OpenSess Solution Overview</title>
++  </head>
++  <body>
++    <h1>
++      OpenSess Solution Overview
++    </h1>
++
++    <table>
++      <tr><td></td><xsl:apply-templates select="//topic" mode="names"/></tr>
++      <tr><td></td><xsl:apply-templates select="//topic" mode="times"/></tr>
++      <tr><td></td><xsl:apply-templates select="//topic" mode="locations"/></tr>
++      <xsl:apply-templates select="//person"/>
++    </table>    
++  </body>
++  </html> 
++</xsl:template>
++
++<xsl:template match="topic" mode="names">
++  <xsl:variable name="t" select="position()"/>
++  <td>
++    <xsl:value-of select="//topic[position() = $t]/@name"/>
++  </td>
++</xsl:template>
++
++<xsl:template match="topic" mode="times">
++  <xsl:variable name="t" select="position()-1"/>
++  <td>
++    <xsl:for-each select="$sol//topicGroup">
++      <xsl:if test="groupTopic[@index = $t]">
++        <xsl:variable name="group" select="position()"/>
++        <xsl:value-of select="//time[position() = $group]/@name"/>
++      </xsl:if>
++    </xsl:for-each>
++  </td>
++</xsl:template>
++
++<xsl:template match="topic" mode="locations">
++  <xsl:variable name="t" select="position()-1"/>
++  <td>
++    <xsl:for-each select="$sol//groupTopic">
++      <xsl:if test="@index = $t">
++       <xsl:variable name="target" select="."/>
++         <xsl:variable name="session" select="((position()-1) mod $sessions) + 1"/>
++        <xsl:value-of select="//location[position() = $session]/@name"/>
++       </xsl:if>
++    </xsl:for-each>
++  </td>
++</xsl:template>
++
++<xsl:template match="person">
++  <xsl:variable name="p" select="position()-1"/>
++
++  <tr>
++    <td><xsl:value-of select="@name"/></td>
++       
++    <xsl:for-each select="//topic">
++      <xsl:variable name="t" select="position()-1"/>
++      <xsl:variable name="assign" select="$sol//roleAssignment[@person = $p and @topic = $t]"/>
++      <td><xsl:choose>
++            <xsl:when test="$assign">
++              <xsl:value-of select="//role[position() = $assign/@role]/@name"/>
++            </xsl:when>
++            <xsl:otherwise> - </xsl:otherwise>
++          </xsl:choose>
++      </td>
++    </xsl:for-each>  
++  </tr>    
++</xsl:template>
++
++</xsl:stylesheet>
+
+
+

@@ -1,0 +1,4355 @@
+From awickner at sheep.berlios.de  Fri Mar  4 13:40:33 2005
+From: awickner at sheep.berlios.de (Andreas Wickner at BerliOS)
+Date: Fri, 4 Mar 2005 13:40:33 +0100
+Subject: [Opensess-svn] r3 - in trunk: . website
+Message-ID: <200503041240.j24CeXUi016573@sheep.berlios.de>
+
+Author: awickner
+Date: 2005-03-04 13:40:32 +0100 (Fri, 04 Mar 2005)
+New Revision: 3
+
+Added:
+   trunk/website/
+   trunk/website/background.html
+   trunk/website/bg.png
+   trunk/website/index.html
+   trunk/website/menu.png
+   trunk/website/opensess.css
+   trunk/website/title.png
+Log:
+Website added to repository
+
+Added: trunk/website/background.html
+===================================================================
+--- trunk/website/background.html	2005-03-03 13:10:32 UTC (rev 2)
++++ trunk/website/background.html	2005-03-04 12:40:32 UTC (rev 3)
+@@ -0,0 +1,148 @@
++<html>
++  <head>
++    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
++    <title>OpenSess Background Information</title>
++    <link rel="stylesheet" href="opensess.css">
++  </header>
++  <body>
++    <div id="title"><h1>OpenSess Background Information</h1></div>
++    <div id="menu">
++      <ul class="top">
++        <li class="level1"><a href="index.html">Home</a></li>
++        <li class="level1">Background</li>
++        <li class="level1"><a href="https://developer.berlios.de/projects/opensess/">Project Page</a></li>
++        <li class="level1"><a href="https://developer.berlios.de/mail/?group_id=3232">Mailing Lists</a></li>
++        <li class="level1"><a href="https://developer.berlios.de/forum/forum.php?forum_id=9870">Users Forum</a></li>
++      </ul>
++      <p>
++      </p>
++      <p>
++        <a href="http://developer.berlios.de" title="BerliOS Developer"> 
++          <img src="http://developer.berlios.de/bslogo.php?group_id=3232" width="124px" height="32px" border="0" alt="BerliOS Developer Logo">
++        </a>   
++      </p>
++    </div>
++    <div id="body">
++
++    <p>OpenSess is used to organize discussions when there are various
++      topic, and the participants have varying preferences for the 
++      individual topics.
++    </p>
++
++    <p>Imagine a group of people that meets to exchange and generate ideas,
++      discuss them, and maybe even make one or two decisions about them.
++      There is probably a single common reason for the meeting, but it
++      might make sense to break down this "root topic" into individual
++      "sub topics" and discuss them separately. There is no reason for
++      everyone to attend all discussions and in particular, nobody wants
++      to attend a discussion that he or she is not at all interested in.
++      This results in smaller groups that can work more efficiently
++      compared to discussion everything in the big group.
++      If some of the discussions could take place in parallel, it might
++      speed up the entire discussion (and maybe decision) process 
++      considerably.
++    </p>
++
++    <p>This leaves us with the big question: Which topics should be
++      discussed in parallel and how should people distribute themselves
++      between the discussion sessions?
++    </p>
++
++    <p>This question has been asked before and there have been several
++      attempts to answer them. The suggested strategies range from
++      almost complete freedom (for example the OpenSpace method
++      described at www.openspaceworld.org) to very rigid organisational
++      schemes that work only for certain numbers of people and topics
++      (for example the Syntegrity method described at www.syntegrity.com).
++    </p>
++
++    <p>OpenSess tends towards the more strongly structured methods in that
++      it attempts to find nearly optimal topic clusterings and participant
++      distributions. However, it has only a few rules regarding the
++      numbers of participants and topics and it incorporates the 
++      preferences that participants have for certain topics.
++      In particular, the OpenSess method depends on the following 
++      concepts and constraints:
++    </p>
++    
++    <ul>
++      <li>
++        <p>The number of <em>sessions</em> that can take place in parallel.
++          This will usually be determined by some "real world constraint"
++          like the number of available rooms.
++        </p>
++      </li>
++      <li>
++        <p>The number of <em>participants</em> that attend the meeting.
++          The number of participants must be divisible by the number of
++          sessions.
++        </p>
++      </li>
++      <li>
++        <p>The number of <em>topics</em> that are to be discussed in the
++          individual sessions. This number is related to the number of
++          <em>rounds</em> that are neccessary to discuss all topics
++          when each round is a set of parallel sessions. In other words,
++          you can either fix the number of rounds which means that you will 
++          have <em>rounds*sessions</em> topics, or you can start with
++          a fixed number of topics, which means that you will have
++          <em>topics/sessions</em> rounds.
++        </p>
++      </li>
++      <li>
++        <p>The number of <em>roles</em> that participants can have in a session.
++          Typical roles are "moderator", "critic" or "observer".
++          the algorithm currently used by OpenSess demands that both the
++          number of participants and the number of topics must also be
++          divisible by the number of roles, but later versions of OpenSess
++          will probably lift that constraint.
++          OpenSess currently allocates an equal number of participants to
++          each role so you will have as many moderators as critics and 
++          observers. This might also change in a later release of OpenSess.
++        </p>
++      </li>
++    </ul>
++
++    <p>The roles are maintained in a list in which the roles are sorted
++      by "strength" or "importance", so that there is a "strongest role"
++      and a "weakest role".
++    </p>
++
++    <p>Each participant also has a <em>preference list</em> which contains
++      every topic exactly once. The first topic in the list is the most
++      important topic for the participant and the last topic is the topic
++      of least interest. OpenSess will try to find configurations in which
++      participants can attend the sessions that are most interesting for them
++      and it will also try to give them the "strongest" role available.
++      In fact, solutions will be judged by how well the interests of the
++      participants are met.
++    </p>
++
++    <p>Each <em>solution</em> produced by OpenSess will consist of the following:
++    </p>
++
++    <ul>
++      <li>
++        <p>The clustering of topics into rounds of sessions.
++        </p>
++      </li>
++      <li>
++        <p>The assignment of participants to sessions and the roles
++          that they have in each session.
++        </p>
++      </li>
++      <li>
++        <p>Several statistical values that evaluate how well the solution
++          meets the interests of the participants.
++        </p>
++      </li>
++    </ul>
++
++    <p>Currently OpenSess produces an arbitrary number of solutions and
++      it is the user's task to choose the one he or she considers best.
++      Later versions of OpenSess will try to better support the user
++      in this task.
++    </p>
++    </div>
++ </body>
++</html>
+\ No newline at end of file
+
+Added: trunk/website/bg.png
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/website/bg.png
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+Added: trunk/website/index.html
+===================================================================
+--- trunk/website/index.html	2005-03-03 13:10:32 UTC (rev 2)
++++ trunk/website/index.html	2005-03-04 12:40:32 UTC (rev 3)
+@@ -0,0 +1,56 @@
++<html>
++  <head>
++    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
++    <title>OpenSess</title>
++    <link rel="stylesheet" href="opensess.css">
++  </header>
++  <body>
++    <div id="title"><h1>OpenSess</h1></div>
++    <div id="menu">
++      <ul class="top">
++        <li class="level1">Home</li>
++        <li class="level1"><a href="background.html">Background</a></li>
++        <li class="level1"><a href="https://developer.berlios.de/projects/opensess/">Project Page</a></li>
++        <li class="level1"><a href="https://developer.berlios.de/mail/?group_id=3232">Mailing Lists</a></li>
++        <li class="level1"><a href="https://developer.berlios.de/forum/forum.php?forum_id=9870">Users Forum</a></li>
++        <li class="level1">
++          <p>
++            &nbsp;
++          </p>
++          <p>
++            &nbsp;
++          </p>
++          <a href="http://developer.berlios.de" title="BerliOS Developer"> 
++            <img src="http://developer.berlios.de/bslogo.php?group_id=3232" width="124px" height="32px" border="0" alt="BerliOS Developer Logo">
++          </a>    
++        </li>
++      </ul>
++    </div>
++    <div id="body">
++      <p>Welcome to the home of OpenSess, a program that helps you to 
++        organize discussion of various topics in parallel sessions where 
++        the participants have different preferences for individual topics 
++        and can play several roles.
++      </p>
++      <p>You can find out more about what OpenSess is in the
++        <a href="background.html">background information</a>.
++      </p>
++      <p>This site has just been created and is very temporary.
++        If you are interested in OpenSess, you can join our
++        <a href="https://developer.berlios.de/mail/?group_id=3232">mailing lists</a>
++        to hear about any new developments. And yes: Downloads will be available in
++        a few days.
++      </p>
++      <p>You can also join the 
++        <a href="https://developer.berlios.de/">BerliOS Developer community</a> 
++        and start discussing the future direction of OpenSess in the
++        <a href="https://developer.berlios.de/forum/forum.php?forum_id=9870">OpenSess Users Forum</a>.
++      </p>
++      <p>If you are interested in contributing to the development of
++        OpenSess, do not hesitate to contact the administrators of the
++        project, which are listed on the
++        <a href="https://developer.berlios.de/projects/opensess/">project page</a>.
++      </p>
++    </div>
++  </body>
++</html>
+
+Added: trunk/website/menu.png
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/website/menu.png
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+Added: trunk/website/opensess.css
+===================================================================
+--- trunk/website/opensess.css	2005-03-03 13:10:32 UTC (rev 2)
++++ trunk/website/opensess.css	2005-03-04 12:40:32 UTC (rev 3)
+@@ -0,0 +1,85 @@
++* {
++  color: #183A0A;
++  font: normal 12pt sans-serif, serif;
++}
++
++body {
++  background: white url("bg.png") repeat-y top left;
++}
++
++div#title { 
++  position: absolute;
++  top: 0px;
++  left: 0px;
++  right: 0px;
++  bottom: 60px;
++}
++
++div#title h1 { 
++  margin: 10px 10px 10px 10px;
++  width: 100%;
++  height: 40px;
++  padding: 5px 20px 5px 20px;
++  background: transparent url("title.png") no-repeat top left;
++}
++
++div#menu {  
++  position: absolute;
++  top: 60px;
++  left: 0px;
++  right: 150px;
++  bottom: 0px;  
++}
++
++div#menu * {  
++  margin: 0px 0px 0px 0px;
++  padding: 0px 0px 0px 0px;
++  font: bold 10pt sans-serif, serif;
++  list-style-type: none;
++}
++
++div#menu a {  
++  text-decoration: none;
++  color: #701010;
++}
++
++div#menu ul.top {
++  width: 130px;
++  margin: 10px 0px 0px 10px;
++  padding: 5px 0px 5px 5px;  
++  background: transparent url("menu.png") repeat-x top left;
++}
++
++div#menu li.level1 { 
++  margin: 0px 0px 0px 0px;
++}
++
++div#menu li.level2 { 
++  padding: 0px 0px 0px 7px;
++}
++
++div#menu li.level3 { 
++  margin: 0px 0px 0px 14px;
++}
++
++div#body {  
++  position: absolute;
++  top: 60px;
++  left: 160px;
++  right: auto;
++  bottom: 100%;  
++  padding: 0px 20px 0px 0px;
++}
++
++h1 {
++  font-weight: bold;
++  font-size: 18pt;
++}
++
++a.button { 
++  margin: 5px 5px;
++}
++
++table * img { 
++  border-style: none;
++}
+\ No newline at end of file
+
+Added: trunk/website/title.png
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/website/title.png
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+
+
+From awickner at sheep.berlios.de  Fri Mar  4 16:42:48 2005
+From: awickner at sheep.berlios.de (Andreas Wickner at BerliOS)
+Date: Fri, 4 Mar 2005 16:42:48 +0100
+Subject: [Opensess-svn] r5 - trunk/openSess
+Message-ID: <200503041542.j24FgmUI028098@sheep.berlios.de>
+
+Author: awickner
+Date: 2005-03-04 16:42:47 +0100 (Fri, 04 Mar 2005)
+New Revision: 5
+
+Modified:
+   trunk/openSess/BorderedListPanel.java
+   trunk/openSess/ChangeMonitor.java
+   trunk/openSess/CloseListener.java
+   trunk/openSess/CommandProcessor.java
+   trunk/openSess/DoubleClickListener.java
+   trunk/openSess/EditPersonWindow.java
+   trunk/openSess/EditRoleWindow.java
+   trunk/openSess/EditTopicWindow.java
+   trunk/openSess/EnterListener.java
+   trunk/openSess/GlobalNewWindow.java
+   trunk/openSess/HelpWindow.java
+   trunk/openSess/ListEditWindow.java
+   trunk/openSess/MainWindow.java
+   trunk/openSess/ObjectPanel.java
+   trunk/openSess/OpenSess.java
+   trunk/openSess/PTAlloc.java
+   trunk/openSess/Persons.java
+   trunk/openSess/Roles.java
+   trunk/openSess/SharedDataComboBoxModel.java
+   trunk/openSess/ShowSolutionWindow.java
+   trunk/openSess/Solution.java
+   trunk/openSess/SolutionPanel.java
+   trunk/openSess/Solver.java
+   trunk/openSess/SolverConstructor.java
+   trunk/openSess/SwingWorker.java
+   trunk/openSess/Topics.java
+   trunk/openSess/XMLStateSaving.java
+Log:
+Propagated keyword changes to repository
+
+
+Property changes on: trunk/openSess/BorderedListPanel.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/ChangeMonitor.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/CloseListener.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/CommandProcessor.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/DoubleClickListener.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/EditPersonWindow.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/EditRoleWindow.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/EditTopicWindow.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/EnterListener.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/GlobalNewWindow.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/HelpWindow.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/ListEditWindow.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/MainWindow.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/ObjectPanel.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/OpenSess.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/PTAlloc.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/Persons.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/Roles.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/SharedDataComboBoxModel.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/ShowSolutionWindow.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/Solution.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/SolutionPanel.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/Solver.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/SolverConstructor.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/SwingWorker.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/Topics.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+Property changes on: trunk/openSess/XMLStateSaving.java
+___________________________________________________________________
+Name: svn
+   + LastChangedDate LastChangedRevision LastChangedBy Author Id
+
+
+
+From awickner at sheep.berlios.de  Fri Mar  4 17:56:03 2005
+From: awickner at sheep.berlios.de (Andreas Wickner at BerliOS)
+Date: Fri, 4 Mar 2005 17:56:03 +0100
+Subject: [Opensess-svn] r6 - trunk/openSess
+Message-ID: <200503041656.j24Gu3af031968@sheep.berlios.de>
+
+Author: awickner
+Date: 2005-03-04 17:56:02 +0100 (Fri, 04 Mar 2005)
+New Revision: 6
+
+Modified:
+   trunk/openSess/Roles.java
+Log:
+Attempt to clean up keyword problem, attempt 1
+
+Modified: trunk/openSess/Roles.java
+===================================================================
+--- trunk/openSess/Roles.java	2005-03-04 15:42:47 UTC (rev 5)
++++ trunk/openSess/Roles.java	2005-03-04 16:56:02 UTC (rev 6)
+@@ -7,7 +7,6 @@
+  * Copyright 2005 Gero Scholz, Andreas Wickner
+  * 
+  * Created:     2005-02-11
+- * Revision ID: $Id: Roles.java 48 2005-03-01 11:12:27Z awi $
+  * 
+  * 2005-02-17/AW: Complete rewrite for GUI.
+  * 
+
+
+
+From awickner at sheep.berlios.de  Fri Mar  4 17:56:44 2005
+From: awickner at sheep.berlios.de (Andreas Wickner at BerliOS)
+Date: Fri, 4 Mar 2005 17:56:44 +0100
+Subject: [Opensess-svn] r7 - trunk/openSess
+Message-ID: <200503041656.j24GuiDs032022@sheep.berlios.de>
+
+Author: awickner
+Date: 2005-03-04 17:56:43 +0100 (Fri, 04 Mar 2005)
+New Revision: 7
+
+Modified:
+   trunk/openSess/Roles.java
+Log:
+Attempt to clean up keyword problem, attempt 2
+
+Modified: trunk/openSess/Roles.java
+===================================================================
+--- trunk/openSess/Roles.java	2005-03-04 16:56:02 UTC (rev 6)
++++ trunk/openSess/Roles.java	2005-03-04 16:56:43 UTC (rev 7)
+@@ -7,6 +7,7 @@
+  * Copyright 2005 Gero Scholz, Andreas Wickner
+  * 
+  * Created:     2005-02-11
++ * Revision ID: $Id$
+  * 
+  * 2005-02-17/AW: Complete rewrite for GUI.
+  * 
+
+
+
+From awickner at sheep.berlios.de  Fri Mar  4 18:53:47 2005
+From: awickner at sheep.berlios.de (Andreas Wickner at BerliOS)
+Date: Fri, 4 Mar 2005 18:53:47 +0100
+Subject: [Opensess-svn] r9 - trunk
+Message-ID: <200503041753.j24HrlTV001799@sheep.berlios.de>
+
+Author: awickner
+Date: 2005-03-04 18:53:44 +0100 (Fri, 04 Mar 2005)
+New Revision: 9
+
+Added:
+   trunk/openSess/
+Removed:
+   trunk/tmp/
+Log:
+Clean up of keyword problems, part 2
+
+Copied: trunk/openSess (from rev 8, trunk/tmp)
+
+
+
+From awickner at sheep.berlios.de  Fri Mar  4 19:45:45 2005
+From: awickner at sheep.berlios.de (Andreas Wickner at BerliOS)
+Date: Fri, 4 Mar 2005 19:45:45 +0100
+Subject: [Opensess-svn] r10 - trunk/openSess
+Message-ID: <200503041845.j24IjjFm003349@sheep.berlios.de>
+
+Author: awickner
+Date: 2005-03-04 19:45:41 +0100 (Fri, 04 Mar 2005)
+New Revision: 10
+
+Modified:
+   trunk/openSess/BorderedListPanel.java
+   trunk/openSess/ChangeMonitor.java
+   trunk/openSess/CloseListener.java
+   trunk/openSess/CommandProcessor.java
+   trunk/openSess/DoubleClickListener.java
+   trunk/openSess/EditPersonWindow.java
+   trunk/openSess/EditRoleWindow.java
+   trunk/openSess/EditTopicWindow.java
+   trunk/openSess/EnterListener.java
+   trunk/openSess/GlobalNewWindow.java
+   trunk/openSess/HelpWindow.java
+   trunk/openSess/ListEditWindow.java
+   trunk/openSess/MainWindow.java
+   trunk/openSess/ObjectPanel.java
+   trunk/openSess/OpenSess.java
+   trunk/openSess/PTAlloc.java
+   trunk/openSess/Persons.java
+   trunk/openSess/Roles.java
+   trunk/openSess/SharedDataComboBoxModel.java
+   trunk/openSess/ShowSolutionWindow.java
+   trunk/openSess/Solution.java
+   trunk/openSess/SolutionPanel.java
+   trunk/openSess/Solver.java
+   trunk/openSess/SolverConstructor.java
+   trunk/openSess/SwingWorker.java
+   trunk/openSess/Topics.java
+   trunk/openSess/XMLStateSaving.java
+Log:
+Clean up of keyword problems, part 3
+
+
+Property changes on: trunk/openSess/BorderedListPanel.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/ChangeMonitor.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/CloseListener.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/CommandProcessor.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/DoubleClickListener.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/EditPersonWindow.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/EditRoleWindow.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/EditTopicWindow.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/EnterListener.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/GlobalNewWindow.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/HelpWindow.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/ListEditWindow.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/MainWindow.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/ObjectPanel.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/OpenSess.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/PTAlloc.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/Persons.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/Roles.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/SharedDataComboBoxModel.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/ShowSolutionWindow.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/Solution.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/SolutionPanel.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/Solver.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/SolverConstructor.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/SwingWorker.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/Topics.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+Property changes on: trunk/openSess/XMLStateSaving.java
+___________________________________________________________________
+Name: svn:keywords
+   - "LastChangedDate LastChangedRevision LastChangedBy Author Id"
+   + Id LastChangedBy LastChangedDate LastChangedRevision
+
+
+
+From awickner at sheep.berlios.de  Sat Mar  5 16:01:58 2005
+From: awickner at sheep.berlios.de (Andreas Wickner at BerliOS)
+Date: Sat, 5 Mar 2005 16:01:58 +0100
+Subject: [Opensess-svn] r11 - in trunk: help openSess
+Message-ID: <200503051501.j25F1waa028852@sheep.berlios.de>
+
+Author: awickner
+Date: 2005-03-05 16:01:57 +0100 (Sat, 05 Mar 2005)
+New Revision: 11
+
+Modified:
+   trunk/help/background.html
+   trunk/openSess/GlobalNewWindow.java
+Log:
+Implemented stronger divisibility constraint in GlobalNewWindow.
+Documented that constraint in the help files.
+
+Modified: trunk/help/background.html
+===================================================================
+--- trunk/help/background.html	2005-03-04 18:45:41 UTC (rev 10)
++++ trunk/help/background.html	2005-03-05 15:01:57 UTC (rev 11)
+@@ -51,9 +51,19 @@
+         </p>
+       </li>
+       <li>
++        <p>The number of <em>roles</em> that participants can have in a session.
++          Typical roles are "moderator", "critic" or "observer".
++          OpenSess currently allocates an equal number of participants to
++          each role so you will have as many moderators as critics and 
++          observers. This might change in a later release of OpenSess.
++        </p>
++      </li>
++      <li>
+         <p>The number of <em>participants</em> that attend the meeting.
+-          The number of participants must be divisible by the number of
+-          sessions.
++          The algorithm currently used by OpenSess demands that
++          the number of participants must be divisible by the product 
++          of the number of sessions and the number of roles.
++          Later versions of OpenSess will probably relax that constraint.
+         </p>
+       </li>
+       <li>
+@@ -65,20 +75,11 @@
+           have <em>rounds*sessions</em> topics, or you can start with
+           a fixed number of topics, which means that you will have
+           <em>topics/sessions</em> rounds.
++          In addition, the number of topics must also be divisible by 
++          the product of the number of sessions and the number of roles
++          (and that constraint might also be relaxed in the future).
+         </p>
+       </li>
+-      <li>
+-        <p>The number of <em>roles</em> that participants can have in a session.
+-          Typical roles are "moderator", "critic" or "observer".
+-          the algorithm currently used by OpenSess demands that both the
+-          number of participants and the number of topics must also be
+-          divisible by the number of roles, but later versions of OpenSess
+-          will probably lift that constraint.
+-          OpenSess currently allocates an equal number of participants to
+-          each role so you will have as many moderators as critics and 
+-          observers. This might also change in a later release of OpenSess.
+-        </p>
+-      </li>
+     </ul>
+ 
+     <p>The roles are maintained in a list in which the roles are sorted
+
+Modified: trunk/openSess/GlobalNewWindow.java
+===================================================================
+--- trunk/openSess/GlobalNewWindow.java	2005-03-04 18:45:41 UTC (rev 10)
++++ trunk/openSess/GlobalNewWindow.java	2005-03-05 15:01:57 UTC (rev 11)
+@@ -19,7 +19,7 @@
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     13.02.2005
+- * Revision ID: $Id$
++ * Revision ID: $Id: GlobalNewWindow.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -159,8 +159,8 @@
+       int roles    = getNumberOfRoles();
+       int sessions = getNumberOfSessions();
+       
+-      boolean topicsOk = (topics % roles) == 0 && (topics % sessions) == 0;
+-      boolean personsOk = (persons % roles) == 0 && (persons % sessions) == 0;
++      boolean topicsOk = (topics % (roles*sessions)) == 0;
++      boolean personsOk = (persons % (roles*sessions)) == 0;
+       
+       if (topicsOk && personsOk)
+       {
+@@ -172,12 +172,12 @@
+         StringBuffer msg = new StringBuffer("The following constraints were violated:\n");
+         
+         if (!topicsOk)
+-          msg.append("- The number of topics must be divisible by the\n"
+-                     +	"  number of roles and by the number of sessions\n");
++          msg.append("- The number of topics must be divisible by\n"
++                     +	"  (numberOfRoles * numberOfSessions)\n");
+         
+         if (!personsOk)
+-          msg.append("- The number of persons must be divisible by the\n"
+-                     +	"  number of roles and by the number of sessions\n");
++          msg.append("- The number of persons must be divisible by\n"
++                     +	"  (numberOfRoles * numberOfSessions)\n");
+         
+         JOptionPane.showMessageDialog(this, msg, "Constraint Violation", JOptionPane.ERROR_MESSAGE); 
+       }
+
+
+
+From awickner at sheep.berlios.de  Sun Mar  6 13:38:06 2005
+From: awickner at sheep.berlios.de (Andreas Wickner at BerliOS)
+Date: Sun, 6 Mar 2005 13:38:06 +0100
+Subject: [Opensess-svn] r12 - trunk
+Message-ID: <200503061238.j26Cc6X1030177@sheep.berlios.de>
+
+Author: awickner
+Date: 2005-03-06 13:38:05 +0100 (Sun, 06 Mar 2005)
+New Revision: 12
+
+Modified:
+   trunk/RELEASE
+Log:
+Minor change in RELEASE for upcoming release 0.5
+
+Modified: trunk/RELEASE
+===================================================================
+--- trunk/RELEASE	2005-03-05 15:01:57 UTC (rev 11)
++++ trunk/RELEASE	2005-03-06 12:38:05 UTC (rev 12)
+@@ -2,7 +2,10 @@
+ Release Notes for OpenSess 0.5
+ ==============================
+ 
+-This is the first official release of OpenSess.
++This is the first official release of OpenSess, a program that 
++helps you to organize discussion of various topics in parallel 
++sessions where the participants have different preferences for 
++individual topics and can play several roles.
+ It is still something of a pre-release since at the moment
+ the program produces as many solutions as you want, but does
+ not help you much in selecting the best solution.
+
+
+
+From awickner at sheep.berlios.de  Sun Mar  6 13:49:07 2005
+From: awickner at sheep.berlios.de (Andreas Wickner at BerliOS)
+Date: Sun, 6 Mar 2005 13:49:07 +0100
+Subject: [Opensess-svn] r13 - tags
+Message-ID: <200503061249.j26Cn7kf030576@sheep.berlios.de>
+
+Author: awickner
+Date: 2005-03-06 13:49:05 +0100 (Sun, 06 Mar 2005)
+New Revision: 13
+
+Added:
+   tags/release-0.5/
+Log:
+Tagging release 0.5 of OpenSess
+
+Copied: tags/release-0.5 (from rev 12, trunk)
+
+
+
+From awickner at sheep.berlios.de  Wed Mar  9 14:27:45 2005
+From: awickner at sheep.berlios.de (Andreas Wickner at BerliOS)
+Date: Wed, 9 Mar 2005 14:27:45 +0100
+Subject: [Opensess-svn] r14 - in trunk: . openSess
+Message-ID: <200503091327.j29DRjOn017215@sheep.berlios.de>
+
+Author: awickner
+Date: 2005-03-09 14:27:43 +0100 (Wed, 09 Mar 2005)
+New Revision: 14
+
+Modified:
+   trunk/Makefile
+   trunk/openSess/EditRoleWindow.java
+   trunk/openSess/ListEditWindow.java
+   trunk/openSess/Roles.java
+   trunk/openSess/SolverConstructor.java
+Log:
+Added minimum and maximum occurences to roles:
+- in the EditRoleWindow
+- in the Roles class
+- in the methods that save to and restore from XML.
+
+Modified: trunk/Makefile
+===================================================================
+--- trunk/Makefile	2005-03-06 12:49:05 UTC (rev 13)
++++ trunk/Makefile	2005-03-09 13:27:43 UTC (rev 14)
+@@ -17,7 +17,7 @@
+ sourceTarget: 
+ 	@echo "Creating $(SOURCE_TARGET)..."
+ 	@rm -f $(SOURCE_TARGET)
+-	@zip $(SOURCE_TARGET) README-SOURCE LICENSE RELEASE BUILD openSess/*.java help/*
++	@zip $(SOURCE_TARGET) README-SOURCE LICENSE COPYING RELEASE BUILD openSess/*.java help/*
+ 
+ winTarget: exeFiles
+ 	@echo "Creating $(WIN_TARGET)..."
+@@ -25,7 +25,7 @@
+ 	@mv -f using_javaw.exe OpenSess.exe
+ 	@mv -f using_java.exe OpenSessConsole.exe
+ 	@rm -f $(WIN_TARGET)
+-	@zip $(WIN_TARGET) README-WIN LICENSE RELEASE INSTALL openSess/*.class help/* OpenSess.exe OpenSessConsole.exe
++	@zip $(WIN_TARGET) README-WIN LICENSE RELEASE COPYING INSTALL openSess/*.class help/* OpenSess.exe OpenSessConsole.exe
+ 
+ siteTarget: 
+ 	@echo "Creating $(SITE_TARGET)..."
+
+Modified: trunk/openSess/EditRoleWindow.java
+===================================================================
+--- trunk/openSess/EditRoleWindow.java	2005-03-06 12:49:05 UTC (rev 13)
++++ trunk/openSess/EditRoleWindow.java	2005-03-09 13:27:43 UTC (rev 14)
+@@ -1,11 +1,25 @@
+ package openSess;
++import java.awt.GridBagConstraints;
++import java.awt.GridBagLayout;
++import java.awt.Insets;
++import java.awt.event.ActionEvent;
++import java.awt.event.FocusEvent;
++
++import javax.swing.BorderFactory;
++import javax.swing.ComboBoxModel;
++import javax.swing.JFormattedTextField;
+ import javax.swing.JFrame;
++import javax.swing.JLabel;
++import javax.swing.JPanel;
++import javax.swing.border.Border;
++import javax.swing.border.EtchedBorder;
++import javax.swing.border.TitledBorder;
+ 
+ /*
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     17.02.2005
+- * Revision ID: $Id$
++ * Revision ID: $Id: EditRoleWindow.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -31,6 +45,10 @@
+ public class EditRoleWindow
+   extends ListEditWindow
+ {
++  private JFormattedTextField minField, maxField;
++  private Roles               roles;
++  private int                 selected;
++  
+   /**
+    * Constructs an EditRoleWindow.
+    * 
+@@ -40,4 +58,109 @@
+   {
+     super(frame, "Edit Role");
+   }
++  
++  /**
++   * Adds fields for editing the minimum and maximum occurences of roles.
++   */
++  protected void addAdditionalComponents(JPanel panel)
++  {
++    JPanel occursPanel = new JPanel();
++    occursPanel.setLayout(new GridBagLayout());
++    Border border = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
++    TitledBorder titled = BorderFactory.createTitledBorder(border, "Occurences per session");
++    titled.setTitleJustification(TitledBorder.LEFT);
++    occursPanel.setBorder(titled);
++    panel.add(occursPanel);
++
++    GridBagConstraints c = new GridBagConstraints();
++    c.gridx   = 0;
++    c.gridy   = 0;
++    c.insets  = new Insets(5, 5, 5, 5);
++    c.anchor  = GridBagConstraints.LINE_START;
++    occursPanel.add(new JLabel("Minimum per session:"), c);
++    c.gridy   = 1;
++    occursPanel.add(new JLabel("Maximum per session:"), c);
++    c.gridx   = 1;
++    c.gridy   = 0;
++    c.fill    = GridBagConstraints.HORIZONTAL;
++    c.weightx = 1.0;
++    minField = new JFormattedTextField();
++    minField.setValue(new Integer(3));
++    minField.setColumns(5);
++    minField.addActionListener(this); // react to VK_ENTER
++    minField.addFocusListener(this);  // react to FocusLost
++    occursPanel.add(minField, c);
++    c.gridy = 1;
++    maxField = new JFormattedTextField();
++    maxField.setValue(new Integer(3));
++    maxField.setColumns(5);
++    maxField.addActionListener(this); // react to VK_ENTER
++    maxField.addFocusListener(this);  // react to FocusLost
++    occursPanel.add(maxField, c);
++  }
++  
++  /**
++   * Displays data before the window is displayed.
++   */
++  protected void additionalEditSetup(ComboBoxModel model, Solver solver, int selected,
++                                     ChangeMonitor changeMonitor)
++  {
++    updateOccurences(solver, selected);
++  }
++  
++  /**
++   * Redisplays data when the role selection changes.
++   */
++  protected void additionalChangesOnSelection(Solver solver, int selected)
++  {
++    updateOccurences(solver, selected);
++  }
++
++  /**
++   * Display the current occurence data
++   * 
++   * @param solver   the Solver object containing configuration data.
++   * @param role     the index of the currently selected object.
++   */
++  protected void updateOccurences(Solver solver, int role)
++  {
++    roles    = solver.getRoles();
++    selected = role;
++    int min  = roles.getMinimumPerSession(role);
++    int max  = roles.getMaximumPerSession(role);
++    
++    minField.setValue(new Integer(min));
++    maxField.setValue(new Integer(max));
++  }
++
++  /**
++   * Read the occurences fields when VK_ENTER was pressed.
++   */
++  protected void additionalActionPerformed(ActionEvent e)
++  {
++    Object source = e.getSource();
++    
++    if (source == minField || source == maxField)
++      setRoleOccurences();
++  }
++
++  /**
++   * Read the occurences fields when the focus changed.
++   */
++  protected void additionalFocusLost(FocusEvent e)
++  {
++    Object source = e.getSource();
++    
++    if (source == minField || source == maxField)
++      setRoleOccurences();
++  }
++  
++  /**
++   * Read the text fields and set the role values accordingly.
++   */
++  protected void setRoleOccurences()
++  {
++    roles.setMinimumPerSession(selected, getIntFromField(minField));
++    roles.setMaximumPerSession(selected, getIntFromField(maxField));
++  }
+ }
+
+Modified: trunk/openSess/ListEditWindow.java
+===================================================================
+--- trunk/openSess/ListEditWindow.java	2005-03-06 12:49:05 UTC (rev 13)
++++ trunk/openSess/ListEditWindow.java	2005-03-09 13:27:43 UTC (rev 14)
+@@ -4,6 +4,7 @@
+ import java.awt.event.ActionListener;
+ import java.awt.event.FocusEvent;
+ import java.awt.event.FocusListener;
++import java.text.ParseException;
+ 
+ import javax.swing.AbstractButton;
+ import javax.swing.BorderFactory;
+@@ -13,6 +14,7 @@
+ import javax.swing.JButton;
+ import javax.swing.JComboBox;
+ import javax.swing.JDialog;
++import javax.swing.JFormattedTextField;
+ import javax.swing.JFrame;
+ import javax.swing.JLabel;
+ import javax.swing.JOptionPane;
+@@ -23,7 +25,7 @@
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     16.02.2005
+- * Revision ID: $Id$
++ * Revision ID: $Id: ListEditWindow.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -100,12 +102,12 @@
+     editPanel.add(new JLabel("Name:"));
+     editPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+     nameField = new JTextField();
+-    nameField.setActionCommand("set");
+     nameField.addActionListener(this); // react to VK_ENTER
+     nameField.addFocusListener(this);  // react to FocusLost
+     editPanel.add(nameField);
+     
+     addAdditionalComponents(rootPanel);
++    rootPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+     
+     JPanel buttonPanel = new JPanel();
+     buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
+@@ -230,9 +232,6 @@
+           redisplay();
+         }
+       }
+-      else if (command.equals("set"))
+-      {
+-      }
+       else if (command.equals("close"))
+       {
+         setVisible(false);
+@@ -256,10 +255,23 @@
+    */
+   public void focusLost(FocusEvent e)
+   {
+-    setObjectName(false);
++    if (e.getSource() == nameField)
++      setObjectName(false);
++    
++    additionalFocusLost(e);
+   }
+ 
+   /**
++   * Derived classes can override this method if they need
++   * control over focus changes.
++   * 
++   * @param e the FocusEvent.
++   */
++  protected void additionalFocusLost(FocusEvent e)
++  {
++  }
++  
++  /**
+    * Set the name of the currently selected object to the value of
+    * the text field. If the parameter is true, try to advance the
+    * current selection to the next object.
+@@ -361,4 +373,23 @@
+       
+     return -1;
+   }
++  
++  /**
++   * Get the value of a JFormattedField as an int.
++   * 
++   * @param field the field.
++   * @return the value, converted to int.
++   */
++  protected int getIntFromField(JFormattedTextField field)
++  {
++    try
++    {
++      field.commitEdit();
++    }
++    catch (ParseException ex)
++    {
++    }
++    
++    return ((Integer)field.getValue()).intValue();
++  }
+ }
+
+Modified: trunk/openSess/Roles.java
+===================================================================
+--- trunk/openSess/Roles.java	2005-03-06 12:49:05 UTC (rev 13)
++++ trunk/openSess/Roles.java	2005-03-09 13:27:43 UTC (rev 14)
+@@ -7,7 +7,7 @@
+  * Copyright 2005 Gero Scholz, Andreas Wickner
+  * 
+  * Created:     2005-02-11
+- * Revision ID: $Id$
++ * Revision ID: $Id: Roles.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * 2005-02-17/AW: Complete rewrite for GUI.
+  * 
+@@ -50,7 +50,8 @@
+   implements XMLStateSaving
+ {
+   private DefaultListModel names;
+-
++  private int              minPerSession[], maxPerSession[];
++  
+   /**
+    * Constructs a new Roles object from information in the Solver object.
+    * 
+@@ -59,10 +60,19 @@
+   public Roles(Solver solver)
+   {
+     names = new DefaultListModel();
+-
+-    for (int role = 0;  role < solver.dimRoles;  ++role)
++    int dimRoles = solver.dimRoles;
++    minPerSession = new int[dimRoles];
++    maxPerSession = new int[dimRoles];
++    
++    for (int role = 0;  role < dimRoles;  ++role)
++    {
+       names.addElement("Role " + (role+1));
+-  
++      minPerSession[role] = solver.getPersons().getNumber() 
++      											/ solver.getSessionNumber()
++                            / dimRoles;
++      maxPerSession[role] = minPerSession[role];
++    }
++    
+     if (getNumber() > 0)
+       setName(0, "Speaker");
+     
+@@ -137,6 +147,54 @@
+   }
+   
+   /**
++   * Return the minimum occurence of the specified role per session.
++   * NOTE: The first role has index 0.
++   * 
++   * @param index the index of a role.
++   * @return the minimum occurences of this role per session.
++   */
++  public int getMinimumPerSession(int index)
++  {
++    return minPerSession[index];
++  }
++  
++  /**
++   * Return the maximum occurence of the specified role per session.
++   * NOTE: The first role has index 0.
++   * 
++   * @param index the index of a role.
++   * @return the maximum occurences of this role per session.
++   */
++  public int getMaximumPerSession(int index)
++  {
++    return maxPerSession[index];
++  }
++  
++  /**
++   * Set the minimum occurence of the specified role per session.
++   * NOTE: The first role has index 0.
++   * 
++   * @param index the index of a role.
++   * @param min the minimum occurence.
++   */
++  public void setMinimumPerSession(int index, int min)
++  {
++    minPerSession[index] = min;
++  }
++  
++  /**
++   * Set the maximum occurence of the specified role per session.
++   * NOTE: The first role has index 0.
++   * 
++   * @param index the index of a role.
++   * @param max the maximum occurence.
++   */
++  public void setMaximumPerSession(int index, int max)
++  {
++    maxPerSession[index] = max;
++  }
++  
++  /**
+    * Produce an XML representation of the roles.
+    */
+   public void save(PrintWriter stream, int level)
+@@ -144,7 +202,9 @@
+     Indenter.println(stream, level, "<roles>");
+ 
+     for (int r = 0;  r < getNumber();  ++r)
+-      Indenter.println(stream, level+1, "<role name=\"" + getName(r) + "\"/>");
++      Indenter.println(stream, level+1, "<role name=\"" + getName(r) 
++                       + "\" min=\"" + getMinimumPerSession(r)
++                       + "\" max=\"" + getMaximumPerSession(r) + "\"/>");
+     
+     Indenter.println(stream, level, "</roles>");
+   }
+
+Modified: trunk/openSess/SolverConstructor.java
+===================================================================
+--- trunk/openSess/SolverConstructor.java	2005-03-06 12:49:05 UTC (rev 13)
++++ trunk/openSess/SolverConstructor.java	2005-03-09 13:27:43 UTC (rev 14)
+@@ -6,7 +6,7 @@
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     21.02.2005
+- * Revision ID: $Id$
++ * Revision ID: $Id: SolverConstructor.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -84,7 +84,15 @@
+     else if (qName.equals("roles"))
+       role = -1;
+     else if (qName.equals("role"))
+-      solver.getRoles().setName(++role, getString(attributes, "name", role));
++    {
++      Roles roles = solver.getRoles();
++      roles.setName(++role, getString(attributes, "name", role));
++      int minmax = solver.getPersons().getNumber()
++      				/	solver.getSessionNumber()
++      				/ solver.getRoles().getNumber();
++      roles.setMinimumPerSession(role, getInt(attributes, "min", minmax));
++      roles.setMaximumPerSession(role, getInt(attributes, "max", minmax));
++    }
+     else if (qName.equals("preferredTopic"))
+       solver.getPersons().setPreference(person, ++topic, getInt(attributes, "index", 0));
+     else if (qName.equals("solutionParameters"))
+
+
+
+From awickner at sheep.berlios.de  Fri Mar 11 14:42:32 2005
+From: awickner at sheep.berlios.de (Andreas Wickner at BerliOS)
+Date: Fri, 11 Mar 2005 14:42:32 +0100
+Subject: [Opensess-svn] r15 - trunk/openSess
+Message-ID: <200503111342.j2BDgWix031367@sheep.berlios.de>
+
+Author: awickner
+Date: 2005-03-11 14:42:31 +0100 (Fri, 11 Mar 2005)
+New Revision: 15
+
+Added:
+   trunk/openSess/NameChangeListener.java
+Modified:
+   trunk/openSess/BorderedListPanel.java
+   trunk/openSess/ListEditWindow.java
+   trunk/openSess/MainWindow.java
+   trunk/openSess/ShowSolutionWindow.java
+Log:
+- Name changes of persons, topics and roles will update the ShowSolutionWindow
+- The ChangeMonitor will no longer be signalled just because an EditWindow was opened.
+
+Modified: trunk/openSess/BorderedListPanel.java
+===================================================================
+--- trunk/openSess/BorderedListPanel.java	2005-03-09 13:27:43 UTC (rev 14)
++++ trunk/openSess/BorderedListPanel.java	2005-03-11 13:42:31 UTC (rev 15)
+@@ -17,7 +17,7 @@
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     27.02.2005
+- * Revision ID: $Id$
++ * Revision ID: $Id: BorderedListPanel.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -98,6 +98,26 @@
+   }
+ 
+   /**
++   * Add a NameChangeListener to the panel's ListEditWindow.
++   * 
++   * @param listener the NameChangeListener.
++   */
++  public void addNameChangeListener(NameChangeListener listener)
++  {
++    editWindow.addNameChangeListener(listener);
++  }
++  
++  /**
++   * Return the ListEditWindow's NameChangeListener.
++   * 
++   * @return the NameChangeListener.
++   */
++  public NameChangeListener getNameChangeListener()
++  {
++    return editWindow.getNameChangeListener();
++  }
++  
++  /**
+    * Return the Solver object.
+    * 
+    * @return the Solver object.
+
+Modified: trunk/openSess/ListEditWindow.java
+===================================================================
+--- trunk/openSess/ListEditWindow.java	2005-03-09 13:27:43 UTC (rev 14)
++++ trunk/openSess/ListEditWindow.java	2005-03-11 13:42:31 UTC (rev 15)
+@@ -5,6 +5,7 @@
+ import java.awt.event.FocusEvent;
+ import java.awt.event.FocusListener;
+ import java.text.ParseException;
++import java.util.Vector;
+ 
+ import javax.swing.AbstractButton;
+ import javax.swing.BorderFactory;
+@@ -71,7 +72,8 @@
+   private JTextField    nameField;
+   private Solver        solver;
+   private ChangeMonitor changeMonitor;
+-
++  private Vector        nameChangeListeners;
++  
+   /**
+    * Construct a ListEditWindow that is a child of the given JFrame and
+    * has the given title.
+@@ -84,7 +86,8 @@
+   public ListEditWindow(JFrame frame, String title)
+   {
+     super(frame, title, false);
+-
++    nameChangeListeners = new Vector();
++    
+     JPanel rootPanel = new JPanel();
+     getContentPane().add(rootPanel);
+     rootPanel.setLayout(new BoxLayout(rootPanel, BoxLayout.PAGE_AXIS));
+@@ -175,8 +178,29 @@
+     nameField.requestFocusInWindow();
+     redisplay();
+   }
++
++  /**
++   * Add a NameChangeListener.
++   * 
++   * @param listener the NameChangeListener.
++   */
++  public void addNameChangeListener(NameChangeListener listener)
++  {
++    nameChangeListeners.add(listener);
++  }
+   
+   /**
++   * Derived classes can redefine this method if they are interested
++   * in NameChange events. The default implementation returns null.
++   * 
++   * @return a NameChangeListener.
++   */
++  public NameChangeListener getNameChangeListener()
++  {
++    return null;
++  }
++  
++  /**
+    * Derived classes can implement this method if they need to perform any
+    * initialisations depending on a Solver object before the window is
+    * displayed.
+@@ -293,11 +317,20 @@
+     else
+     {
+       SharedDataComboBoxModel model = (SharedDataComboBoxModel) list.getModel();
+-      model.setElementAt(nameField.getText(), index);
+-      list.setSelectedIndex(index);
+-      additionalActionOnNameChange(solver, list.getSelectedIndex(), 
++      String oldName = (String) model.getElementAt(index);
++      
++      if (!name.equals(oldName))
++      { // only do anything when there is a real change
++        model.setElementAt(nameField.getText(), index);
++        list.setSelectedIndex(index);
++        additionalActionOnNameChange(solver, list.getSelectedIndex(), 
+                                    nameField.getText());
+-      changeMonitor.signalChange();
++        
++        for (int n=0;  n < nameChangeListeners.size();  ++n)
++          ((NameChangeListener)nameChangeListeners.elementAt(n)).nameChanged(index, oldName, name);
++        
++        changeMonitor.signalChange();
++      }
+       
+       if (advance)
+       {
+
+Modified: trunk/openSess/MainWindow.java
+===================================================================
+--- trunk/openSess/MainWindow.java	2005-03-09 13:27:43 UTC (rev 14)
++++ trunk/openSess/MainWindow.java	2005-03-11 13:42:31 UTC (rev 15)
+@@ -32,7 +32,7 @@
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     2005-02-12
+- * Revision ID: $Id$
++ * Revision ID: $Id: MainWindow.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -288,6 +288,12 @@
+     solutionPanel = new SolutionPanel(frame, solver, this);
+     rc.weighty = 0.0;
+     rootPanel.add(solutionPanel, rc);
++    
++    // Make sure that the solution panel gets informed about all name changes.
++    NameChangeListener listener = solutionPanel.getNameChangeListener();
++    personPanel.addNameChangeListener(listener);
++    topicPanel.addNameChangeListener(listener);
++    rolePanel.addNameChangeListener(listener);
+   }
+   
+   /**
+@@ -349,8 +355,8 @@
+       getHelpWindow().setVisible(true);
+     else if (command.equals("about"))
+     {
+-      String date     = getSubversionString("$LastChangedDate$");
+-      String revision = getSubversionString("$LastChangedRevision$");
++      String date     = getSubversionString("$LastChangedDate: 2005-03-04 18:45:41Z $");
++      String revision = getSubversionString("$LastChangedRevision: 10 $");
+       
+       JOptionPane.showMessageDialog(frame,
+                                     programName + "\n\n"	
+
+Added: trunk/openSess/NameChangeListener.java
+===================================================================
+--- trunk/openSess/NameChangeListener.java	2005-03-09 13:27:43 UTC (rev 14)
++++ trunk/openSess/NameChangeListener.java	2005-03-11 13:42:31 UTC (rev 15)
+@@ -0,0 +1,40 @@
++package openSess;
++
++/*
++ * Copyright 2005 Andreas Wickner
++ * 
++ * Created:     11.03.2005
++ * Revision ID: $Id$
++ * 
++ * This file is part of OpenSess.
++ * OpenSess is free software; you can redistribute it and/or modify it 
++ * under the terms of the GNU General Public License as published by 
++ * the Free Software Foundation; either version 2 of the License, or 
++ * (at your option) any later version.
++ *
++ * OpenSess is distributed in the hope that it will be useful, but 
++ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
++ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
++ * for more details.
++ *
++ * You should have received a copy of the GNU General Public License along 
++ * with OpenSess; if not, write to the Free Software Foundation, Inc., 
++ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
++ */
++
++/**
++ * ListEditWindows can call implementers of this interface
++ * when the name of the selected element changes.
++ * @author andreas
++ */
++public interface NameChangeListener
++{
++  /**
++   * The name at the indicated index has changed from oldName to newName.
++   * 
++   * @param index   the index of the changed object.
++   * @param oldName the old name.
++   * @param newName the new name.
++   */
++  public void nameChanged(int index, String oldName, String newName);
++}
+
+Modified: trunk/openSess/ShowSolutionWindow.java
+===================================================================
+--- trunk/openSess/ShowSolutionWindow.java	2005-03-09 13:27:43 UTC (rev 14)
++++ trunk/openSess/ShowSolutionWindow.java	2005-03-11 13:42:31 UTC (rev 15)
+@@ -18,7 +18,7 @@
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     19.02.2005
+- * Revision ID: $Id$
++ * Revision ID: $Id: ShowSolutionWindow.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -48,6 +48,8 @@
+   private JLabel meanDevValue, maxDevValue, stdDevValue, targetValue;
+   private JPanel topicsPanel, rolesPanel;
+   private Color  gColor[];
++  private Solver solver;
++  private int    selected;
+   
+   /**
+    * Construct a new ShowSolutionWindow.
+@@ -57,9 +59,21 @@
+   ShowSolutionWindow(JFrame frame)
+   {
+     super(frame, "Show Solution");
++    selected = -1;
+   }
+   
+   /**
++   * Returns a NameChangeListener that will redisplay the window
++   * when any name change is signalled.
++   * 
++   * @return a NameChangeListener.
++   */
++  public NameChangeListener getNameChangeListener()
++  {
++    return new RedisplayOnNameChange(this);
++  }
++  
++  /**
+    * Add a JTabbedPane to the JPanel.
+    */
+   protected void addAdditionalComponents(JPanel panel)
+@@ -126,6 +140,9 @@
+   protected void additionalEditSetup(ComboBoxModel model, Solver solver, int selected,
+                                      ChangeMonitor changeMonitor)
+   {
++    this.solver = solver;
++    this.selected = selected;
++    
+     Topics topics = solver.getTopics();
+     Persons persons = solver.getPersons();
+     int tNumber = topics.getNumber();   // Number of topics
+@@ -198,20 +215,6 @@
+         c.gridy = p;
+         JLabel label = new JLabel();
+         rolesPanel.add(label, c);
+-        
+-        if (p == 0) // Column headers
+-        {
+-          if (t > 0)
+-            if (t == tNumber+1)
+-              label.setText("Dev.");
+-            else
+-              label.setText(topics.getName(t-1));
+-        }
+-        else if (t == 0) // Row headers
+-        {
+-          if (p > 0)
+-            label.setText(persons.getName(p-1));
+-        }
+       }
+ 
+     // add cells to the layout that push it to the upper left
+@@ -225,7 +228,7 @@
+     c.weighty = 1.0;
+     rolesPanel.add(Box.createVerticalGlue(), c);
+ 
+-    update(solver, selected);
++    update();
+   }
+   
+   /**
+@@ -233,15 +236,17 @@
+    */
+   protected void additionalChangesOnSelection(Solver solver, int selected)
+   {
+-    update(solver, selected);
++    this.solver = solver;
++    this.selected = selected;
++    update();
+   }
+ 
+   /**
+    * Update all solution panels with the currently selected solution.
+    */
+-  protected void update(Solver solver, int selected)
++  protected void update()
+   {
+-    if (selected < 0)
++    if (solver == null || selected < 0)
+       return;
+     
+     Solution solution = (Solution) solver.getSolutions().elementAt(selected);
+@@ -278,18 +283,50 @@
+     }
+     
+     // Update role assignments
+-    for (int p = 1;  p < pNumber+1;  ++p)
+-      for (int t = 1;  t < tNumber+2;  ++t)
++    for (int p = 0;  p < pNumber+1;  ++p)
++      for (int t = 0;  t < tNumber+2;  ++t)
+       {
+         JLabel label = (JLabel)rolesPanel.getComponent(p*(tNumber+2) + t);
+-        
+-        if (t < tNumber+1)
++
++        if (p == 0) // Column headers
+         {
++          if (t > 0)
++            if (t == tNumber+1)
++              label.setText("Dev.");
++            else
++              label.setText(topics.getName(t-1));
++        }
++        else if (t == 0) // Row headers
++        {
++          if (p > 0)
++            label.setText(persons.getName(p-1));
++        }
++        else if (t < tNumber+1)  // Role fields
++        {
+           label.setText(roles.getNameExtended(solution.getRole(p-1, t-1)));
+           label.setForeground(gColor[solution.topicToGroup(t-1)]);
+         }
+-        else
++        else  // deviation sums
+           label.setText("" + solution.getPersonSum(p-1));
+       }
+   }
++  
++  
++  private class RedisplayOnNameChange
++    implements NameChangeListener
++  {
++    private ShowSolutionWindow window;
++    
++    RedisplayOnNameChange(ShowSolutionWindow window)
++    {
++      this.window = window;
++    }
++    
++    public void nameChanged(int index, String oldName, String newName)
++    {
++      System.out.println("Solution update on name change " + oldName + " -> " + newName);
++      window.update();
++    }
++  }
++
+ }
+
+
+
+From awickner at sheep.berlios.de  Tue Mar 15 14:43:52 2005
+From: awickner at sheep.berlios.de (Andreas Wickner at BerliOS)
+Date: Tue, 15 Mar 2005 14:43:52 +0100
+Subject: [Opensess-svn] r16 - branches
+Message-ID: <200503151343.j2FDhqTu029677@sheep.berlios.de>
+
+Author: awickner
+Date: 2005-03-15 14:43:51 +0100 (Tue, 15 Mar 2005)
+New Revision: 16
+
+Added:
+   branches/alternative-assign/
+Log:
+Alternative role assignment strategy
+
+Copied: branches/alternative-assign (from rev 15, trunk)
+
+
+
+From awickner at sheep.berlios.de  Tue Mar 15 14:52:51 2005
+From: awickner at sheep.berlios.de (Andreas Wickner at BerliOS)
+Date: Tue, 15 Mar 2005 14:52:51 +0100
+Subject: [Opensess-svn] r17 - branches/alternative-assign/openSess
+Message-ID: <200503151352.j2FDqpgF030353@sheep.berlios.de>
+
+Author: awickner
+Date: 2005-03-15 14:52:49 +0100 (Tue, 15 Mar 2005)
+New Revision: 17
+
+Modified:
+   branches/alternative-assign/openSess/GlobalNewWindow.java
+   branches/alternative-assign/openSess/MainWindow.java
+   branches/alternative-assign/openSess/PTAlloc.java
+   branches/alternative-assign/openSess/Solver.java
+Log:
+Alternative assignment strategy implemented.
+GUI has been changed to use it, but there are no constraints checks so far.
+
+Modified: branches/alternative-assign/openSess/GlobalNewWindow.java
+===================================================================
+--- branches/alternative-assign/openSess/GlobalNewWindow.java	2005-03-15 13:43:51 UTC (rev 16)
++++ branches/alternative-assign/openSess/GlobalNewWindow.java	2005-03-15 13:52:49 UTC (rev 17)
+@@ -159,8 +159,11 @@
+       int roles    = getNumberOfRoles();
+       int sessions = getNumberOfSessions();
+       
+-      boolean topicsOk = (topics % (roles*sessions)) == 0;
+-      boolean personsOk = (persons % (roles*sessions)) == 0;
++      // temporarily disabled until algorithm question is solved.
++      // boolean topicsOk = (topics % (roles*sessions)) == 0;
++      // boolean personsOk = (persons % (roles*sessions)) == 0;
++      boolean topicsOk = true;
++      boolean personsOk = true;
+       
+       if (topicsOk && personsOk)
+       {
+
+Modified: branches/alternative-assign/openSess/MainWindow.java
+===================================================================
+--- branches/alternative-assign/openSess/MainWindow.java	2005-03-15 13:43:51 UTC (rev 16)
++++ branches/alternative-assign/openSess/MainWindow.java	2005-03-15 13:52:49 UTC (rev 17)
+@@ -62,6 +62,7 @@
+   extends ChangeMonitor
+   implements ActionListener, CommandProcessor, XMLStateSaving
+ {
++  private final int          algorithm   = 1;
+   private final String       programName = "OpenSess";
+   private final String       fileSuffix  = "ose";
+   private JFrame             frame;
+@@ -396,7 +397,7 @@
+     rolePanel.hideEditor();
+     solutionPanel.hideEditor();
+     
+-    solver = new Solver(topicNumber, personNumber, roleNumber, sessionNumber);
++    solver = new Solver(topicNumber, personNumber, roleNumber, sessionNumber, algorithm);
+     
+     // reconfigure the panels
+     topicPanel.reconfigure(solver, solver.getTopics().getNames());
+
+Modified: branches/alternative-assign/openSess/PTAlloc.java
+===================================================================
+--- branches/alternative-assign/openSess/PTAlloc.java	2005-03-15 13:43:51 UTC (rev 16)
++++ branches/alternative-assign/openSess/PTAlloc.java	2005-03-15 13:52:49 UTC (rev 17)
+@@ -3,12 +3,13 @@
+ import java.text.NumberFormat;
+ import java.util.Arrays;
+ import java.util.Random;
++import java.util.Vector;
+ 
+ /*
+  * Copyright 2005 Gero Scholz, Andreas Wickner
+  * 
+  * Created:     2005-02-11 
+- * Revision ID: $Id$
++ * Revision ID: $Id: PTAlloc.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * 2005-02-14/AW: Changes to decrease excessive memory allocation/deallocation.
+  * 2005-02-22/GS: Algorithm bug fixes 
+@@ -44,7 +45,7 @@
+   private Solver       solver;
+   private Persons      persons;
+   private Topics       topics;
+-
++  private Roles        roles;
+   private boolean      debug;
+   private int          dimSessions;
+   private int          groups[];
+@@ -59,7 +60,8 @@
+   private double       meanDeviation, maxDeviation, stdDeviation;
+   private NumberFormat compactFormat;
+   private boolean      solved;
+-
++  private Random       rand;
++  
+   /**
+    * Return true if the PTAlloc currently holds a valid solution.
+    * 
+@@ -114,6 +116,7 @@
+     this.solver      = solver;
+     this.persons     = solver.getPersons();
+     this.topics      = solver.getTopics();
++    this.roles       = solver.getRoles();
+     this.dimSessions = solver.getSessionNumber();
+     this.solved      = false;
+     assigned         = new int[solver.dimPersons][solver.dimTopics];
+@@ -210,7 +213,7 @@
+     // expectation level
+ 
+     int bestTargetTotal = Integer.MAX_VALUE, bestTarget = Integer.MAX_VALUE, lastTarget = target;
+-    Random rand = new Random();
++    rand = new Random();
+     
+     if (seed != 0)
+       rand = new Random(seed);
+@@ -459,6 +462,122 @@
+   }
+ 
+   /**
++   * An alternative role assignment algorithm
++   *
++   */
++  public void assignRolesAlternative()
++  {
++    debug = false;
++    
++    if (debug)
++      System.out.println("Using role shuffling on initial matrix:\n" + debugString());
++
++    // Determine the number of required roles per session (with minimum occurence)
++    int requiredRoles = 0;
++    
++    for (int r=0;  r < roles.getNumber();  ++r)
++      requiredRoles += roles.getMinimumPerSession(r);
++      
++    if (debug)
++    	System.out.println(requiredRoles + " roles are required per session.");
++
++    // Build a pool of possible roles to choose from for non-required roles.
++    Vector rolePool = new Vector();
++    
++    for (int r=0;  r < roles.getNumber();  ++r)
++    {
++      int optional = roles.getMaximumPerSession(r) - roles.getMinimumPerSession(r);
++      
++      for (int i=0;  i < optional;  ++i)
++      	rolePool.add(new Integer(r));
++    }
++
++    if (debug)
++    	System.out.println("For each session, there are " + rolePool.size() + " roles in the pool of optional roles.");
++    
++    // First, we go through each session and assign the roles with a minimum occurence
++    for (int t=0;  t < topics.getNumber();  ++t)
++      for (int r=0;  r < roles.getNumber();  ++r)
++        for (int n=0;  n < roles.getMinimumPerSession(r);  ++n)
++          assigned[chooseMostInterestedPerson(t)][t] = r+1;
++
++    if (debug)
++    	System.out.println("\nAfter assigning the required roles:\n" + debugString());
++    
++    // Now, we distribute the optional roles for each session
++    for (int t=0;  t < topics.getNumber();  ++t)
++    {
++      // Make a copy of the complete rolePool
++      Vector pool = (Vector) rolePool.clone();
++      
++      // Count the unassigned persons in this session
++      // (this is done to enable this algorithm to cope with a varying 
++      // number of participants per session).
++      int unassigned = 0;
++      
++      for (int p=0;  p < persons.getNumber();  ++p)
++        if (assigned[p][t] == 9)
++          ++unassigned;
++        
++      // Randomly remove roles from the pool until we have the right number
++      while (pool.size() > unassigned)
++      {
++        int index = rand.nextInt(pool.size());
++        pool.remove(index);
++      }
++
++      if (pool.size() != unassigned)
++        System.out.println("CANNOT HAPPEN: pool size wrong.");
++      
++      // Assign the remaining roles in the pool
++      while (pool.size() > 0)  
++      {
++        int index = rand.nextInt(pool.size());
++        int r     = ((Integer)pool.elementAt(index)).intValue();
++        pool.remove(index);
++        assigned[chooseMostInterestedPerson(t)][t] = r+1;
++      }
++    }
++    
++    if (debug)
++    	System.out.println("\nAfter assigning the other roles:\n" + debugString());
++    
++    solved = true;
++    doStatistics();
++    
++    debug = false;
++  }
++  
++  /**
++   * Of all the participants in the session for topic t that have
++   * not yet been assigned a role, return the one with the highest 
++   * interest.
++   * 
++   * @param t the topic of the session.
++   * @return the most interested unassigned pearticipant.
++   */
++  protected int chooseMostInterestedPerson(int t)
++  {
++    // Of all the unassigned persons in this session,
++    // pick the one with the highest interest.
++    int bestPerson = -1;
++    int interest = 99999;
++    
++    for (int p=0;  p < persons.getNumber();  ++p)
++      if (assigned[p][t] == 9)
++        if (persons.prefInx[p][t] < interest)
++        {
++        	bestPerson = p;
++        	interest   = persons.prefInx[p][t];
++        }
++        
++    if (bestPerson < 0)
++      System.out.println("CANNOT HAPPEN: no person left to choose.");
++        
++    return bestPerson;
++  }
++  
++  /**
+    * Evaluate the solution and set the statistical values.
+    */
+   protected void doStatistics()
+@@ -553,10 +672,39 @@
+     return s;
+   }
+   
++  public String debugString()
++  {
++    StringBuffer s = new StringBuffer();
++
++    s.append("\ngr: ");
++    for (int t = 0; t < solver.dimTopics; t++)
++      s.append("  " + groups[t]);
++    
++    s.append("\n");
++
++    s.append("    ");
++    for (int t = 0; t < solver.dimTopics; t++)
++      s.append(" T" + t);
++    
++    s.append("\n");
++    
++    for (int p = 0; p < solver.dimPersons; p++)
++    {
++      s.append("P" + p + ": ");
++
++      for (int t = 0; t < solver.dimTopics; t++)
++        s.append("  " + assigned[p][t]);
++      
++      s.append("\n");
++    }
++    
++    return s.toString();
++  }
++  
+   public String toString()
+   {
+-		if (!solved) 
+-		  return "suppressing output of unsolved matrix ...\n";
++//		if (!solved) 
++//		  return "suppressing output of unsolved matrix ...\n";
+     
+     // return the final allocation matrix
+     StringBuffer s = new StringBuffer(persons.emptyName() + "   " + topics.toHeaderString(" ") + "\n");
+
+Modified: branches/alternative-assign/openSess/Solver.java
+===================================================================
+--- branches/alternative-assign/openSess/Solver.java	2005-03-15 13:43:51 UTC (rev 16)
++++ branches/alternative-assign/openSess/Solver.java	2005-03-15 13:52:49 UTC (rev 17)
+@@ -2,7 +2,7 @@
+  * Copyright 2005 Gero Scholz, Andreas Wickner
+  * 
+  * Created:     2005-02-11 
+- * Revision ID: $Id$
++ * Revision ID: $Id: Solver.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * 2005-02-14/AW: Changes to decrease excessive memory allocation/deallocation
+  * 2005-02-22/GS: Algorithm bug fixes
+@@ -56,7 +56,7 @@
+                                                 // favors evenly distributed solutions; try values between
+                                                 // 0 and 100 (or greater); large values will usually tend
+                                                 // to make the overall result worse
+-
++  private int              algorithm;
+   private Topics           topics;
+   private Persons          persons;
+   private Roles            roles;
+@@ -88,14 +88,17 @@
+    * @param dimPersons  the number of persons.
+    * @param dimRoles    the number of roles.
+    * @param dimSessions the number of sessions.
++   * @param algorithm   the algorithm to use (0 or 1).
+    */
+-  public Solver(int dimTopics, int dimPersons, int dimRoles, int dimSessions)
++  public Solver(int dimTopics, int dimPersons, int dimRoles, int dimSessions,
++                int algorithm)
+   {
+     this.dimTopics   = dimTopics;
+     this.dimPersons  = dimPersons;
+     this.dimRoles    = dimRoles;
+     this.dimSessions = dimSessions;
+-
++    this.algorithm   = algorithm;
++    
+     topics        = new Topics(this);
+     persons       = new Persons(this);
+     roles         = new Roles(this);
+@@ -353,7 +356,10 @@
+         pt.init(topicGroup, dimTryAlloc, tryP * 4711 + 8812);
+         
+         // thereafter the roles are assigned
+-        pt.assignRoles();
++        if (algorithm == 0)
++          pt.assignRoles();
++        else
++          pt.assignRolesAlternative();
+ 
+         // System.out.print(pt);
+         
+
+
+
+From awickner at sheep.berlios.de  Sun Mar 20 14:54:07 2005
+From: awickner at sheep.berlios.de (Andreas Wickner at BerliOS)
+Date: Sun, 20 Mar 2005 14:54:07 +0100
+Subject: [Opensess-svn] r18 - trunk/openSess
+Message-ID: <200503201354.j2KDs7ci004692@sheep.berlios.de>
+
+Author: awickner
+Date: 2005-03-20 14:54:06 +0100 (Sun, 20 Mar 2005)
+New Revision: 18
+
+Added:
+   trunk/openSess/TaskMonitor.java
+Removed:
+   trunk/openSess/PTAlloc.java
+Modified:
+   trunk/openSess/Persons.java
+   trunk/openSess/Roles.java
+   trunk/openSess/Solution.java
+   trunk/openSess/Solver.java
+   trunk/openSess/SolverConstructor.java
+   trunk/openSess/Topics.java
+Log:
+Some improvements to the software structure:
+- public data members made private and made accessible by methods.
+- Contents of PTAlloc moved to Solution or Solver. PTAlloc deleted.
+- TaskMonitor factored out of Solver.
+
+Deleted: trunk/openSess/PTAlloc.java
+===================================================================
+--- trunk/openSess/PTAlloc.java	2005-03-15 13:52:49 UTC (rev 17)
++++ trunk/openSess/PTAlloc.java	2005-03-20 13:54:06 UTC (rev 18)
+@@ -1,585 +0,0 @@
+-
+-package openSess;
+-import java.text.NumberFormat;
+-import java.util.Arrays;
+-import java.util.Random;
+-
+-/*
+- * Copyright 2005 Gero Scholz, Andreas Wickner
+- * 
+- * Created:     2005-02-11 
+- * Revision ID: $Id$
+- * 
+- * 2005-02-14/AW: Changes to decrease excessive memory allocation/deallocation.
+- * 2005-02-22/GS: Algorithm bug fixes 
+- * 
+- * This file is part of OpenSess.
+- * OpenSess is free software; you can redistribute it and/or modify it 
+- * under the terms of the GNU General Public License as published by 
+- * the Free Software Foundation; either version 2 of the License, or 
+- * (at your option) any later version.
+- *
+- * OpenSess is distributed in the hope that it will be useful, but 
+- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+- * for more details.
+- *
+- * You should have received a copy of the GNU General Public License along 
+- * with OpenSess; if not, write to the Free Software Foundation, Inc., 
+- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
+- */
+-
+-/**
+- * PTAlloc performs the assignment of roles to persons and topics.
+- * A PTAlloc instance can be used to perform the calculation of several
+- * solutions. The method init() is used to set up the PTAlloc for
+- * a particular solution which is then calculated by calling
+- * assignRoles(). If isValidSolution() returns true afterwards,
+- * the solution can be retrieved via createSolution().
+- * 
+- * @author Gero Scholz
+- */
+-public class PTAlloc
+-{
+-  private Solver       solver;
+-  private Persons      persons;
+-  private Topics       topics;
+-
+-  private boolean      debug;
+-  private int          dimSessions;
+-  private int          groups[];
+-  private int          assigned[][];
+-  private int          bestAssignment[][];
+-  private int          pref[][];
+-  private int          topicRole[][];
+-  private int          personRole[][];
+-  private int          nAssignments;
+-  private int          seqPersons[][];
+-  private int          personSum[];
+-  private double       meanDeviation, maxDeviation, stdDeviation;
+-  private NumberFormat compactFormat;
+-  private boolean      solved;
+-
+-  /**
+-   * Return true if the PTAlloc currently holds a valid solution.
+-   * 
+-   * @return true if the solution is valid, false otherwise.
+-   */
+-	public boolean isValidSolution()
+-	{
+-	  return solved;
+-	}
+-	
+-	/**
+-	 * Calculates the target value of the current assignment.
+-	 * 
+-	 * @return the target value.
+-	 */
+-  protected int targetValue()
+-  {
+-		int pval[] = new int[solver.dimPersons];
+-    int val = 0;
+-
+-    for (int p = 0; p < solver.dimPersons; p++)
+-    {
+-      for (int t = 0; t < solver.dimTopics; t++)
+-        if (assigned[p][t] > 0)
+-          pval[p] += pref[p][t];
+-
+-      val += pval[p];
+-    }
+-    
+-    double mean = (val * 1.0 / solver.dimPersons);
+-    double dev = 0;
+-    
+-    for (int p = 0; p < solver.dimPersons; p++)
+-      dev += (mean - pval[p]) * (mean - pval[p]);
+-
+-    dev = Math.sqrt(dev / solver.dimPersons);
+-    val += (solver.dimBalancing * dev);
+-
+-    return val;
+-  }
+-
+-  /**
+-   * Constructs a new PTAlloc.
+-   * It creates the necessary arrays which are used in subsequent
+-   * calculations. Each calculation must be set up by a call to init().
+-   *  
+-   * @param solver      the Solver object.
+-   */
+-  public PTAlloc(Solver solver)
+-  {
+-    debug            = false;
+-    this.solver      = solver;
+-    this.persons     = solver.getPersons();
+-    this.topics      = solver.getTopics();
+-    this.dimSessions = solver.getSessionNumber();
+-    this.solved      = false;
+-    assigned         = new int[solver.dimPersons][solver.dimTopics];
+-    bestAssignment   = new int[solver.dimPersons][solver.dimTopics];
+-    topicRole        = new int[solver.dimTopics][solver.getRoles().getNumber() + 1];
+-    personRole       = new int[solver.dimPersons][solver.getRoles().getNumber()  + 1];
+-    // seqPersons[][0] = person, seqPerson[][1]=minPrio
+-    nAssignments     = solver.dimPersons * solver.dimTopics / dimSessions;
+-    seqPersons       = new int[nAssignments + 1][2];
+-    personSum        = new int[solver.dimPersons];
+-    // Prepare a number formatter
+-    compactFormat = NumberFormat.getInstance();
+-    compactFormat.setMinimumFractionDigits(2);
+-    compactFormat.setMaximumFractionDigits(2);
+-    
+-    // we calculate the preference for each person and topic under the
+-    // assumption of the given grouping
+-
+-    pref = new int[solver.dimPersons][solver.dimTopics];
+-
+-    for (int p = 0; p < solver.dimPersons; p++)
+-      for (int t = 0; t < solver.dimTopics; t++)
+-      	// changed pref to prefInx -- GS - 2005-02-22
+-        pref[p][t] = solver.getPersons().prefInx[p][t];
+-    
+-    if (debug)
+-    {
+-      System.out
+-          .println("\nPersonen und Pr?ferenzen bei gegebener Themengruppierung:");
+-      System.out.println("\n" + persons.emptyName() + ":   "
+-                         + topics.toHeaderString("   "));
+-      for (int p = 0; p < solver.dimPersons; p++)
+-      {
+-        System.out.print(persons.getName(p) + ":");
+-        for (int t = 0; t < solver.dimTopics; t++)
+-        {
+-          String tmp = "    " + pref[p][t];
+-          System.out.print(tmp.substring(tmp.length() - 4));
+-        }
+-        System.out.println();
+-      }
+-    }
+-  }
+-
+-  /**
+-   * Initialize a calculation by performing a first assignment 
+-   * without specific roles.
+-   * 
+-   * @param groups  the group of topics to work on.
+-   * @param tries   the maximum number of tries.
+-   * @param seed    the seed for the random number generator.
+-   */
+-  public void init(int[] groups, int tries, long seed)
+-  {
+-    for (int person = 0;  person < solver.dimPersons;  ++person)
+-    {
+-      Arrays.fill(assigned[person], 0);  
+-      Arrays.fill(bestAssignment[person], 0);
+-    }
+-    
+-    // we generate a legal assignment as a starting point;
+-    this.groups = groups;
+-    
+-    for (int gr = 0; gr < groups.length / dimSessions; gr++)
+-      for (int p = 0; p < solver.dimPersons; p++)
+-      {
+-        int seq = 0;
+-        
+-        for (int t = 0; t < solver.dimTopics; t++)
+-          if (groups[t] == gr)
+-          {
+-            if (p / (solver.dimPersons / dimSessions) == seq)
+-              assigned[p][t] = 9;
+-
+-            ++seq;
+-          }
+-      }
+-
+-    int target = targetValue();
+-
+-    if (debug)
+-    {
+-      System.out.println("\n" + persons.emptyName() + ":  "
+-                         + topics.toHeaderString(" "));
+-      System.out.println(this + "target=" + target);
+-    }
+-
+-    // again we apply simulated annealing; we try to swap people
+-    // between sessions of the same group
+-
+-    // simulated annealing; we look for better solutions and
+-    // adopt them in most cases (80%) as a starting point for the next trial
+-    // sometimes we accept worse solutions and temporarily lower the
+-    // expectation level
+-
+-    int bestTargetTotal = Integer.MAX_VALUE, bestTarget = Integer.MAX_VALUE, lastTarget = target;
+-    Random rand = new Random();
+-    
+-    if (seed != 0)
+-      rand = new Random(seed);
+-
+-    for (int y = 0; y < tries; y++)
+-    {
+-      // modify constellation, later restore possible
+-      int p1 = 0, t1 = 0, p2 = 0, t2 = 0;
+-      p1 = rand.nextInt(solver.dimPersons);
+-      t1 = rand.nextInt(solver.dimTopics / dimSessions);
+-      // look for a topic the selected person is assigned to
+-      for (int t = 0; t < solver.dimTopics; t++)
+-        if (assigned[p1][t] > 0)
+-        {
+-          if (t1 <= 0)
+-          {
+-            t1 = t;
+-            break;
+-          }
+-          
+-          --t1;
+-        }
+-
+-        // pick a member of another topic of the same session
+-      int n = rand.nextInt(solver.dimPersons - solver.dimPersons / dimSessions);
+-      
+-      for (int t = 0; t < solver.dimTopics; t++)
+-        if (groups[t] == groups[t1] && t1 != t)
+-          for (int p = 0; p < solver.dimPersons; p++)
+-          {
+-            if (assigned[p][t] > 0 && n <= 0)
+-            {
+-              p2 = p;
+-              t2 = t;
+-              break;
+-            }
+-            
+-            --n;
+-          }
+-      
+-      assigned[p1][t1] = 0;
+-      assigned[p1][t2] = 9;
+-      assigned[p2][t1] = 9;
+-      assigned[p2][t2] = 0;
+-
+-      // calculate target value
+-      lastTarget = target;
+-      target = targetValue();
+-      // pref[p1][t1]-pref[p1][t2]+pref[p2][t2]-pref[p2][t1]);
+-
+-      if (debug)
+-      {
+-        System.out.println("\np1=" + p1 + " t1=" + topics.getName(t1)
+-                           + "  /  p2=" + p2 + " t2=" + topics.getName(t2));
+-        System.out.println(this + "target=" + target + "   (" + bestTarget
+-                           + ")  (" + bestTargetTotal + ")");
+-      }
+-
+-      if (target < bestTargetTotal)
+-      {
+-        // check if solution is known already
+-        boolean known = false;
+-        
+-        if (!known)
+-        {
+-          bestTargetTotal = target;
+-          // store best result
+-          for (int p = 0; p < solver.dimPersons; p++)
+-            for (int t = 0; t < solver.dimTopics; t++)
+-              bestAssignment[p][t] = assigned[p][t];
+-
+-          if (debug)
+-            System.out.println("BEST ASSIGNMENT");
+-        }
+-      }
+-      
+-      if (target < bestTarget)
+-      {
+-        if (rand.nextInt(100) >= 100)
+-        {
+-          // take back
+-          assigned[p1][t1] = 9;
+-          assigned[p1][t2] = 0;
+-          assigned[p2][t1] = 0;
+-          assigned[p2][t2] = 9;
+-          target = lastTarget;
+-          
+-          if (debug)
+-            System.out.println("better, but staying.");
+-        }
+-        else
+-        {
+-          // accept
+-          bestTarget = target;
+-          
+-          if (debug)
+-            System.out.println("better, moving.");
+-        }
+-      }
+-      else
+-      {
+-        if (rand.nextInt(100) >= 0)
+-        {
+-          // take back
+-          assigned[p1][t1] = 9;
+-          assigned[p1][t2] = 0;
+-          assigned[p2][t1] = 0;
+-          assigned[p2][t2] = 9;
+-          target = lastTarget;
+-          if (debug)
+-            System.out.println("worse, staying");
+-        }
+-        else
+-        {
+-          // accept
+-          bestTarget = target;
+-          if (debug)
+-            System.out.println("worse, but moving.");
+-        }
+-      }
+-    }
+-
+-    for (int p = 0; p < solver.dimPersons; p++)
+-      for (int t = 0; t < solver.dimTopics; t++)
+-        assigned[p][t] = bestAssignment[p][t];
+-
+-    if (debug)
+-    {
+-      target = targetValue();
+-      System.out.println(this + "target=" + target + "  bestTargetTotal="
+-                         + bestTargetTotal);
+-    }
+-  }
+-
+-  /**
+-   * Assign the roles to produce a solution.
+-   * After calling this method, isValidSoution() should be used
+-   * to check whether a valid solution has been reached.
+-   */
+-  void assignRoles()
+-  {
+-    int dimRoles = solver.getRoles().getNumber();
+-
+-    for (int topic = 0;  topic < solver.dimTopics;  ++topic)
+-      Arrays.fill(topicRole[topic], 0);
+-
+-    for (int person = 0;  person < solver.dimPersons;  ++person)
+-      Arrays.fill(personRole[person], 0);
+-
+-    for (int as = 0;  as < nAssignments + 1;  ++as)
+-      Arrays.fill(seqPersons[as], 0);
+-
+-    int topicLimit = solver.dimPersons / dimSessions / dimRoles;
+-    int personLimit = solver.dimTopics / dimSessions / dimRoles;
+-
+-    // for every role we repeat the same procedure:
+-    // we try to allocate the role according to the preference of the person
+-    // we perform backtracking to find a valid solution
+-    boolean debug = false;
+-
+-    if (debug)
+-      System.out.println(this);
+-
+-    // we define the sequence in which we want to assign roles to the persons
+-    // we change the sequence of persons for each step to prevent a bias
+-		int noStep   = 0;
+-		int maxSteps = 100000; // Integer.MAX_VALUE;
+-		solved = true;
+-		
+-    for (int n = 0; n < nAssignments; n++)
+-    {
+-      int p = n % solver.dimPersons;
+-      int cycle = n / solver.dimPersons;
+-      
+-      if (cycle % 2 == 0)
+-        seqPersons[n][0] = p;
+-      else
+-        seqPersons[n][0] = solver.dimPersons - 1 - p;
+-    }
+-
+-    for (int n = 0; n < nAssignments; n++)
+-    {
+-			if (++noStep > maxSteps)
+-			{
+-			  solved = false;
+-			  break;
+-			}
+-			
+-      int r = (n / (nAssignments / dimRoles)) + 1;
+-      int p = seqPersons[n][0];
+-      boolean ok = false;
+-      int t = 0, prio;
+-      
+-      for (prio = seqPersons[n][1]; prio < solver.dimTopics; prio++)
+-      {
+-        t = persons.prefInx[p][prio];
+-        
+-        if (assigned[p][t] == 9)
+-        {
+-          if (debug)
+-            System.out.print("n=" + n + " r=" + r + " p=" + p + " t=" + t);
+-          
+-          // try to assign the role
+-          if (topicRole[t][r] < topicLimit && personRole[p][r] < personLimit)
+-          {
+-            assigned[p][t] = r;
+-            topicRole[t][r] += 1;
+-            personRole[p][r] += 1;
+-            
+-            if (debug)
+-              System.out.println("  assigned.");
+-            
+-            ok = true;
+-            break;
+-          }
+-          else
+-          {
+-            ok = false;
+-            
+-            if (debug)
+-              System.out.println("  not possible.");
+-          }
+-        }
+-      }
+-      
+-      if (ok)
+-      { // going forward, reset minPrio for next n
+-        seqPersons[n][1] = prio + 1;
+-        seqPersons[n + 1][1] = 0;
+-      }
+-      else
+-      { // back tracking
+-        n -= 1;
+-
+-        p = seqPersons[n][0];
+-        t = persons.prefInx[p][seqPersons[n][1] - 1];
+-        assigned[p][t] = 9;
+-        topicRole[t][r] -= 1;
+-        personRole[p][r] -= 1;
+-        n -= 1;
+-      }
+-    }
+-    
+-		// System.out.println (noStep + " steps performed.");
+-		doStatistics();
+-  }
+-
+-  /**
+-   * Evaluate the solution and set the statistical values.
+-   */
+-  protected void doStatistics()
+-  {
+-    float  total = 0;
+-    int    sumMax = 0;
+-    int    pval[] = new int[solver.dimPersons];
+-    int    val = 0;
+-    
+-    for (int p = 0; p < solver.dimPersons; p++)
+-    {
+-      for (int t = 0; t < solver.dimTopics; t++)
+-        if (assigned[p][t] > 0)
+-          pval[p] += pref[p][t];
+-      
+-      val += pval[p];
+-    }
+-    
+-    double mean = (val * 1.0 / solver.dimPersons);
+-    double dev = 0;
+-    
+-    for (int p = 0;  p < solver.dimPersons;  p++)
+-      dev += (mean - pval[p]) * (mean - pval[p]);
+-    
+-    dev = Math.sqrt(dev / solver.dimPersons);
+-         
+-    for (int p = 0; p < solver.dimPersons; p++)
+-    {
+-      int sum = -(solver.dimTopics / dimSessions)
+-                * ((solver.dimTopics / dimSessions) - 1) / 2;
+-      
+-      for (int t = 0; t < solver.dimTopics; t++)
+-        if (assigned[p][t] > 0)
+-          sum += pref[p][t]; // *pref[p][t])
+-      
+-      personSum[p] = sum;
+-      
+-      total += sum;
+-      
+-      if (sumMax < sum)
+-        sumMax = sum;
+-    }
+-
+-    meanDeviation = total / solver.dimPersons;
+-    maxDeviation = sumMax;  
+-    stdDeviation = Math.sqrt(dev);
+-  }
+-
+-  /**
+-   * Create a Solution object from the current solution.
+-   * 
+-   * @param index this is the current number of the solution.
+-   *              Will be used to give the solution an initial name
+-   *              ("Solution &lt;index&gt;").
+-   * @return the new Solution object.
+-   */
+-  public Solution createSolution(int index)
+-  {
+-    if (!solved)
+-      return null;
+-    
+-    Solution s = new Solution(solver);
+-
+-    for (int gr = 0;  gr < groups.length;  ++gr)
+-    {
+-      int groupIndex = 0;
+-      
+-      for (int t = 0;  t < solver.dimTopics;  ++t)
+-        if (groups[t] == gr)
+-          s.setGroupElement(gr, groupIndex++, t);
+-    }
+-    
+-    for (int p = 0; p < solver.dimPersons; p++)
+-    {
+-      for (int t = 0; t < solver.dimTopics; t++)
+-        s.setRole(p, t, assigned[p][t]);
+-      
+-      s.setPersonSum(p, personSum[p]);
+-    }
+-
+-    s.setStatistics(meanDeviation, maxDeviation, stdDeviation, targetValue());
+-
+-    StringBuffer name = new StringBuffer("Solution " + (index+1));
+-    name.append(": ");
+-    name.append(compactFormat.format(s.getMeanDeviation()));
+-    name.append(" - ");
+-    name.append(compactFormat.format(s.getMaximumDeviation()));
+-    name.append(" - ");
+-    name.append(compactFormat.format(s.getStandardDeviation()));
+-    s.setName(name.toString());
+-    
+-    return s;
+-  }
+-  
+-  public String toString()
+-  {
+-		if (!solved) 
+-		  return "suppressing output of unsolved matrix ...\n";
+-    
+-    // return the final allocation matrix
+-    StringBuffer s = new StringBuffer(persons.emptyName() + "   " + topics.toHeaderString(" ") + "\n");
+-         
+-    for (int p = 0; p < solver.dimPersons; p++)
+-    {
+-      s.append(persons.getName(p) + "  ");
+-
+-      for (int t = 0; t < solver.dimTopics; t++)
+-        s.append(" " + solver.getRoles().getNameExtended(assigned[p][t]));
+-
+-      String tmp = "       " + personSum[p];
+-
+-      s.append(tmp.substring(tmp.length() - 5) + "\n");
+-    }
+-    
+-    s.append(persons.emptyName() + "   " + topics.toHeaderString(" ") + "\n");
+-    s.append("    mittlere Abweichung=" + meanDeviation
+-         + "    maximale Abweichung=" + maxDeviation  
+-         + "    Standardabw.=" + stdDeviation
+-         + "    target=" + targetValue()
+-         + "\n\n");
+-    
+-    return s.toString();
+-  }
+-}
+\ No newline at end of file
+
+Modified: trunk/openSess/Persons.java
+===================================================================
+--- trunk/openSess/Persons.java	2005-03-15 13:52:49 UTC (rev 17)
++++ trunk/openSess/Persons.java	2005-03-20 13:54:06 UTC (rev 18)
+@@ -9,7 +9,7 @@
+  * Copyright 2005 Gero Scholz, Andreas Wickner
+  * 
+  * Created:     2005-02-11 
+- * Revision ID: $Id$
++ * Revision ID: $Id: Persons.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * 2005-02-22/GS: Algorithm bug fixes
+  * 
+@@ -41,8 +41,8 @@
+   private DefaultListModel names;
+   private static int       nameLen = 30;
+   
+-  public int              pref[][];    /** the topics ordered by preference */
+-  public int              prefInx[][]; /** the rank of the preference for each topic */
++  private int              pref[][];    /** the topics ordered by preference */
++  private int              prefInx[][]; /** the rank of the preference for each topic */
+ 
+   /**
+    * Constructs a new Persons object. Uses the configuration data in a
+@@ -50,22 +50,22 @@
+    * 
+    * @param solver the Solver object.
+    */
+-  public Persons(Solver solver)
++  public Persons(Solver solver, int dimPersons, int dimTopics)
+   {
+     this.solver = solver;
+-
++    
+     // store the names
+     names = new DefaultListModel();
+     
+-    for (int p = 0; p < solver.dimPersons; p++)
++    for (int p = 0; p < dimPersons; p++)
+       names.addElement("Person " + (p+1));
+ 
+     // create an initial preference structure
+-    pref = new int[solver.dimPersons][solver.dimTopics];
+-    prefInx = new int[solver.dimPersons][solver.dimTopics];
+-    for (int p = 0; p < solver.dimPersons; p++)
++    pref = new int[dimPersons][dimTopics];
++    prefInx = new int[dimPersons][dimTopics];
++    for (int p = 0; p < dimPersons; p++)
+     {
+-      for (int t = 0; t < solver.dimTopics; t++)
++      for (int t = 0; t < dimTopics; t++)
+       {
+         prefInx[p][t] = pref[p][t] = t;
+       }
+@@ -130,6 +130,19 @@
+   }
+   
+   /**
++   * For the indicated person, return the index that the specified
++   * topic has in the preferences list.
++   *  
++   * @param person the person index.
++   * @param topic  the topic index.
++   * @return the index in the preferences list.
++   */
++  public int getPreferenceIndex(int person, int topic)
++  {
++    return prefInx[person][topic];
++  }
++  
++  /**
+    * For the indicated person, swap the topics at indeces "first" and "second"
+    * in the preferences list.
+    * 
+@@ -167,12 +180,15 @@
+   {
+     // assign random preferences by randomly swapping pairs of
+     // the initial preference structure
+-    for (int p = 0;  p < solver.dimPersons;  p++)
++    int dimPersons = solver.getPersons().getNumber();
++    int dimTopics  = solver.getTopics().getNumber();
++    
++    for (int p = 0;  p < dimPersons;  p++)
+     {
+       for (int i = 0;  i < shuffle;  i++)	
+       {
+-        int j = rand.nextInt(solver.dimTopics);
+-        int k = rand.nextInt(solver.dimTopics);
++        int j = rand.nextInt(dimTopics);
++        int k = rand.nextInt(dimTopics);
+         int tmp = pref[p][j];
+         pref[p][j] = pref[p][k];
+         pref[p][k] = tmp;
+@@ -186,8 +202,11 @@
+    */
+   protected void createPrefInx()
+   {
+-    for (int p = 0; p < solver.dimPersons; p++)
+-      for (int t = 0; t < solver.dimTopics; t++)
++    int dimPersons = solver.getPersons().getNumber();
++    int dimTopics  = solver.getTopics().getNumber();
++
++    for (int p = 0; p < dimPersons; p++)
++      for (int t = 0; t < dimTopics; t++)
+         prefInx[p][pref[p][t]] = t;
+   }
+ 
+@@ -198,11 +217,14 @@
+    */
+   public String ranks()
+   {
++    int dimPersons = solver.getPersons().getNumber();
++    int dimTopics  = solver.getTopics().getNumber();
+     String s = new String();
+-    for (int p = 0; p < solver.dimPersons; p++)
++    
++    for (int p = 0; p < dimPersons; p++)
+     {
+       s += getName(p) + ":";
+-      for (int t = 0; t < solver.dimTopics; t++)
++      for (int t = 0; t < dimTopics; t++)
+       {
+         String tmp = "   " + (pref[p][t] + 1);
+         s += tmp.substring(tmp.length() - 3);
+@@ -239,15 +261,18 @@
+    */
+   public String toString()
+   {
++    int dimPersons = solver.getPersons().getNumber();
++    int dimTopics  = solver.getTopics().getNumber();
+     String s = new String();
+-    for (int p = 0; p < solver.dimPersons; p++)
++    
++    for (int p = 0; p < dimPersons; p++)
+     {
+       s += getName(p) + ":  ";
+-      for (int t = 0; t < solver.dimTopics; t++)
++      for (int t = 0; t < dimTopics; t++)
+       {
+       	// changed prefInx to pref -- GS - 2005-02-22
+         s += solver.getTopics().getName(pref[p][t]);
+-        if (t < solver.dimTopics - 1)
++        if (t < dimTopics - 1)
+           s += "__";
+       }
+       s += "\n";
+
+Modified: trunk/openSess/Roles.java
+===================================================================
+--- trunk/openSess/Roles.java	2005-03-15 13:52:49 UTC (rev 17)
++++ trunk/openSess/Roles.java	2005-03-20 13:54:06 UTC (rev 18)
+@@ -57,10 +57,9 @@
+    * 
+    * @param solver the Solver object containing configuration information.
+    */
+-  public Roles(Solver solver)
++  public Roles(Solver solver, int dimRoles)
+   {
+     names = new DefaultListModel();
+-    int dimRoles = solver.dimRoles;
+     minPerSession = new int[dimRoles];
+     maxPerSession = new int[dimRoles];
+     
+
+Modified: trunk/openSess/Solution.java
+===================================================================
+--- trunk/openSess/Solution.java	2005-03-15 13:52:49 UTC (rev 17)
++++ trunk/openSess/Solution.java	2005-03-20 13:54:06 UTC (rev 18)
+@@ -6,7 +6,7 @@
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     18.02.2005
+- * Revision ID: $Id$
++ * Revision ID: $Id: Solution.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -49,12 +49,15 @@
+    */
+   Solution(Solver solver)
+   {
++    int dimTopics = solver.getTopics().getNumber();
++    int dimSessions = solver.getSessionNumber();
++    int dimPersons  = solver.getPersons().getNumber(); 
+     this.solver = solver;
+-    groupNumber = solver.getTopics().getNumber() / solver.getSessionNumber();
+-    groupSize   = solver.getSessionNumber();
+-    group = new int[groupNumber][groupSize];
+-    role = new int[solver.getPersons().getNumber()][solver.getTopics().getNumber()];
+-    personSum = new int[solver.getPersons().getNumber()];
++    groupNumber = dimTopics / dimSessions;
++    groupSize   = dimSessions;
++    group       = new int[groupNumber][groupSize];
++    role        = new int[dimPersons][dimTopics];
++    personSum   = new int[dimPersons];
+   }
+ 
+   /**
+@@ -124,6 +127,14 @@
+     return -1;
+   }
+   
++  public void clearRoles()
++  {
++    int dimPersons = solver.getPersons().getNumber();
++    
++    for (int person = 0;  person < dimPersons;  ++person)
++      Arrays.fill(role[person], 0);  
++  }
++  
+   /**
+    * Return the role of the specified person with regard to the specified topic.
+    * @param person the person.
+@@ -145,6 +156,43 @@
+   {
+     return personSum[person];
+   }
++	
++	/**
++	 * Calculates the target value of the current assignment.
++	 * 
++	 * @return the target value.
++	 */
++  protected int calculateTargetValue()
++  {
++    Persons persons    = solver.getPersons();
++    Topics  topics     = solver.getTopics();
++    int     dimPersons = persons.getNumber();
++    int     dimTopics  = topics.getNumber();
++    
++		int pval[] = new int[dimPersons];
++    int val = 0;
++
++    for (int p = 0;  p < dimPersons;  ++p)
++    {
++      for (int t = 0;  t < dimTopics; ++t)
++        if (getRole(p, t) > 0)
++          pval[p] += persons.getPreferenceIndex(p, t);
++
++      val += pval[p];
++    }
++    
++    double mean = (val * 1.0 / dimPersons);
++    double dev = 0;
++    
++    for (int p = 0;  p < dimPersons;  ++p)
++      dev += (mean - pval[p]) * (mean - pval[p]);
++
++    dev = Math.sqrt(dev / dimPersons);
++    val += solver.getBalancingWeight() * dev;
++    targetValue = val;
++    
++    return val;
++  }
+   
+   /**
+    * Return the mean deviation of this solution.
+@@ -228,22 +276,58 @@
+   {
+     personSum[person] = sum;
+   }
+-
++  
+   /**
+-   * Set the statistical values of this solution.
+-   * 
+-   * @param meanDeviation the mean deviation.
+-   * @param maxDeviation  the maximum deviation.
+-   * @param stdDeviation  the standard deviation.
+-   * @param targetValue   the target value.
++   * Evaluate the solution and set the statistical values.
+    */
+-  public void setStatistics(double meanDeviation, double maxDeviation, 
+-                            double stdDeviation, int targetValue)
++  protected void evaluate()
+   {
+-    this.meanDeviation = meanDeviation;
+-    this.maxDeviation  = maxDeviation;
+-    this.stdDeviation  = stdDeviation;
+-    this.targetValue   = targetValue;
++    Persons persons = solver.getPersons();
++    int     dimPersons = persons.getNumber();
++    int     dimTopics  = solver.getTopics().getNumber();
++    int     dimSessions = solver.getSessionNumber();
++    float   total = 0;
++    int     sumMax = 0;
++    int     pval[] = new int[dimPersons];
++    int     val = 0;
++    
++    for (int p = 0; p < dimPersons; p++)
++    {
++      for (int t = 0; t < dimTopics; t++)
++        if (getRole(p, t) > 0)
++          pval[p] += persons.getPreferenceIndex(p, t);
++      
++      val += pval[p];
++    }
++    
++    double mean = ((double)val) / dimPersons;
++    double dev = 0;
++    
++    for (int p = 0;  p < dimPersons;  p++)
++      dev += (mean - pval[p]) * (mean - pval[p]);
++    
++    dev = Math.sqrt(dev / dimPersons);
++         
++    for (int p = 0; p < dimPersons; p++)
++    {
++      int sum = -(dimTopics / dimSessions)
++                * ((dimTopics / dimSessions) - 1) / 2;
++      
++      for (int t = 0; t < dimTopics; t++)
++        if (getRole(p, t) > 0)
++          sum += persons.getPreferenceIndex(p, t); 
++      
++      personSum[p] = sum;
++      
++      total += sum;
++      
++      if (sumMax < sum)
++        sumMax = sum;
++    }
++
++    meanDeviation = total / dimPersons;
++    maxDeviation  = sumMax;  
++    stdDeviation  = dev;
+   }
+ 
+   /**
+@@ -301,4 +385,37 @@
+     
+     Indenter.println(stream, level, "</solution>");
+   }
++  
++  public String toString()
++  {
++    Persons persons = solver.getPersons();
++    Topics  topics  = solver.getTopics();
++    int     dimPersons = persons.getNumber();
++    int     dimTopics  = topics.getNumber();
++    
++    // return the final allocation matrix
++    StringBuffer s = new StringBuffer(persons.emptyName() + "   " + topics.toHeaderString(" ") + "\n");
++         
++    for (int p = 0; p < dimPersons; p++)
++    {
++      s.append(persons.getName(p) + "  ");
++
++      for (int t = 0; t < dimTopics; t++)
++        s.append(" " + solver.getRoles().getNameExtended(getRole(p, t)));
++
++      String tmp = "       " + personSum[p];
++
++      s.append(tmp.substring(tmp.length() - 5) + "\n");
++    }
++    
++    s.append(persons.emptyName() + "   " + topics.toHeaderString(" ") + "\n");
++    s.append("    mittlere Abweichung=" + getMeanDeviation()
++         + "    maximale Abweichung=" + getMaximumDeviation()  
++         + "    Standardabw.=" + getStandardDeviation()
++         + "    target=" + calculateTargetValue()
++         + "\n\n");
++    
++    return s.toString();
++  }
++
+ }
+
+Modified: trunk/openSess/Solver.java
+===================================================================
+--- trunk/openSess/Solver.java	2005-03-15 13:52:49 UTC (rev 17)
++++ trunk/openSess/Solver.java	2005-03-20 13:54:06 UTC (rev 18)
+@@ -2,7 +2,7 @@
+  * Copyright 2005 Gero Scholz, Andreas Wickner
+  * 
+  * Created:     2005-02-11 
+- * Revision ID: $Id$
++ * Revision ID: $Id: Solver.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * 2005-02-14/AW: Changes to decrease excessive memory allocation/deallocation
+  * 2005-02-22/GS: Algorithm bug fixes
+@@ -24,6 +24,9 @@
+  */
+ 
+ package openSess;
++import java.text.NumberFormat;
++import java.util.Arrays;
++import java.util.Random;
+ import java.util.Vector;
+ 
+ import javax.swing.DefaultListModel;
+@@ -33,39 +36,41 @@
+  * It maintains the dimensions of the various object lists
+  * as well as the object lists themselves. It provides
+  * the solution algorithm and analysis functions.
+- * 
+- * TODO: Maybe the class is a bit too central and should be
+- *       restructured. Also, the separation of concerns between
+- *       Solver and PTAlloc is not quite clear (andreas).
++ * The algorithm must be executed in a different thread, therefore
++ * it is implemented as the doTask() method of a TaskMonitor.
+  *  
+  * @author Gero Scholz
+  */
+ public class Solver
++extends TaskMonitor
+ {
+-  int                      dimPersons;
+-  int                      dimRoles;
+-  int                      dimTopics;
+   private int              dimSessions;
+   private int              dimShuffle   = 100;  // the greater the more randomly
+                                                 // preferences will
+                                                 // be distributed.
+                                                 // should be 3 * dimTopics or more, values < 3 will lead
+                                                 // to pathologic / trivial distributions
+-  int                      dimBalancing = 20;   // weight of a component in the
++  private int              dimBalancing = 20;   // weight of a component in the
+                                                 // target function which
+                                                 // favors evenly distributed solutions; try values between
+                                                 // 0 and 100 (or greater); large values will usually tend
+                                                 // to make the overall result worse
+-
+   private Topics           topics;
+   private Persons          persons;
+   private Roles            roles;
+-  private int              current      = 0;
+-  private boolean          taskDone     = false;
+-  private boolean          taskCanceled = false;
+-  private String           statMessage;
+   private Vector           solutions;
+   private DefaultListModel solutionNames;
++  private int              dimTryTopicClustering;
++  private int              dimTryPersonAssignment;
++  private int              dimTryAlloc;
++  private boolean          debug;
++  private Solution         solution;
++  private int              bestAssignment[][];
++  private int              topicRole[][];
++  private int              personRole[][];
++  private int              seqPersons[][];
++  private NumberFormat     compactFormat;
++  private boolean          solved;
+   
+   /*
+    * currently there is a tendency to find an ideal solution for some persons
+@@ -73,14 +78,6 @@
+    * function of the allocation process could change this.
+    */
+ 
+-  /*
+-  public static void main(String[] args)
+-  {
+-    System.out.println("\nOpenSess allocation solver 0.1 by Gero Scholz");
+-    new Solver().solve(2, 3, 100000);
+-  }
+-  */
+-  
+   /**
+    * Create a new Solver with the specified dimensions.
+    * 
+@@ -91,21 +88,27 @@
+    */
+   public Solver(int dimTopics, int dimPersons, int dimRoles, int dimSessions)
+   {
+-    this.dimTopics   = dimTopics;
+-    this.dimPersons  = dimPersons;
+-    this.dimRoles    = dimRoles;
+     this.dimSessions = dimSessions;
+ 
+-    topics        = new Topics(this);
+-    persons       = new Persons(this);
+-    roles         = new Roles(this);
++    topics        = new Topics(this, dimTopics);
++    persons       = new Persons(this, dimPersons, dimTopics);
++    roles         = new Roles(this, dimRoles);
+     solutions     = new Vector();
+     solutionNames = new DefaultListModel();
+-    
+-    //persons.setRandomPrefs(new Random(4711),dimShuffle);
+   }
+ 
+   /**
++   * Return the weight of a component in the target function which
++   * favors evenly distributed solutions.; try values between
++   * 
++   * @return the balancing weight.
++   */
++  public int getBalancingWeight()
++  {
++    return dimBalancing;
++  }
++  
++  /**
+    * Return the number of sessions.
+    * 
+    * @return the number of sessions.
+@@ -178,10 +181,7 @@
+   
+   /**
+    * Start a solution calculation as a separate task.
+-   * This is neccessary in order not to block the GUI thread,
+-   * however I do not know why this has to be so complicated.
+-   * All this impressive handwaving was copied from Javasoft 
+-   * example code...
++   * This is neccessary in order not to block the GUI thread.
+    * 
+    * @param dimTryTopicClustering  the number of topic clusterings to try.
+    * @param dimTryPersonAssignment the number of topic/person assignments to try.
+@@ -192,102 +192,19 @@
+                              int dimTryAlloc)
+   {
+     final Solver theSolverItself = this;
+-    final int clusterings = dimTryTopicClustering;
+-    final int assignments = dimTryPersonAssignment;
+-    final int allocs = dimTryAlloc;
+-    
+-    final SwingWorker worker = new SwingWorker()
+-    {
+-      public Object construct()
+-      {
+-        current = 0;
+-        taskDone = false;
+-        taskCanceled = false;
+-        statMessage = null;
+-        return new SolverTask(theSolverItself, clusterings, assignments, allocs); 
+-      }
+-    };
+-    
+-    worker.start();
++    this.dimTryTopicClustering = dimTryTopicClustering;
++    this.dimTryPersonAssignment = dimTryPersonAssignment;
++    this.dimTryAlloc = dimTryAlloc;
++    startTask();
+   }
+   
+-  /**
+-   * SolverTask wraps the actual work to do in a way that is
+-   * compatible with the SwingWorker.
+-   * 
+-   * @author andreas
+-   */
+-  private class SolverTask
+-  {
+-    /**
+-     * The constructor contains the actual work to do
+-     * (which is our solution calculation).
+-     * 
+-     * @param solver the Solver object.
+-     * @param dimTryTopicClustering  the number of topic clusterings to try.
+-     * @param dimTryPersonAssignment the number of topic/person assignments to try.
+-     * @param dimTryAlloc            the maximum number of assignments to try.
+-     */
+-    public SolverTask(Solver solver, int dimTryTopicClustering, 
+-                      int dimTryPersonAssignment,
+-                      int dimTryAlloc)
+-    {
+-      solver.solve(dimTryTopicClustering, dimTryPersonAssignment, dimTryAlloc);
+-    }
+-  };
+-  
+-  /**
+-   * Return the current progress (which is in the range
+-   * 0 to (dimTryTopicClustering*dimTryPersonAssignment)).
+-   * 
+-   * @return the current progress.
+-   */
+-  public int getCurrent()
+-  {
+-    return current;
+-  }
+ 
+   /**
+-   * Can be used to cancel the task from the outside.
+-   */
+-  public void stop()
+-  {
+-    taskCanceled = true;
+-    statMessage = null;
+-  }
+-
+-  /**
+-   * Returns whether the task has completed.
+-   * 
+-   * @return true if completed, false otherwise.
+-   */
+-  public boolean isDone()
+-  {
+-    return taskDone;
+-  }
+-
+-  /**
+-   * Returns the most recent status message, or null
+-   * if there is no current status message.
+-   * 
+-   * @return a status message.
+-   */
+-  public String getMessage()
+-  {
+-    return statMessage;
+-  }
+-
+-  /**
+    * Perform the calculation of solutions.
+    * This should not be called in a GUI thread, use startSolverTask()
+    * instead.
+-   * 
+-   * @param dimTryTopicClustering  the number of topic clusterings to try.
+-   * @param dimTryPersonAssignment the number of topic/person assignments to try.
+-   * @param dimTryAlloc            the maximum number of assignments to try.
+    */
+-  public void solve(int dimTryTopicClustering, int dimTryPersonAssignment,
+-                    int dimTryAlloc)
++  protected void doTask()
+   {
+   	// added update of preference index -- GS - 2005-02-22
+     persons.createPrefInx();
+@@ -319,12 +236,14 @@
+     // make several tries
+     solutionNames.removeAllElements();
+     solutions.removeAllElements();
++    allocate();
++
+     Vector  done = new Vector();
+-    PTAlloc pt   = new PTAlloc(this);
+-
++    int     dimTopics = topics.getNumber();
++    
+     for (int tryT = 0; tryT < dimTryTopicClustering; tryT++)
+     {
+-      statMessage = "Topic Clustering Attempt " + tryT;
++      setMessage("Topic Clustering Attempt " + tryT);
+       
+       int topicGroup[] = topics.createGroup(dimSessions, done, dimTopics
+                                                                * dimTopics
+@@ -341,27 +260,416 @@
+ 
+       // for each clustering we try several assigments
+       // of persons to topics (and roles)
+-      
+       for (int tryP = 0; tryP < dimTryPersonAssignment; tryP++)
+       {
+-        current = tryT*dimTryPersonAssignment + tryP;
++        setCurrent(tryT*dimTryPersonAssignment + tryP);
+         
+-        if (taskCanceled)
++        if (taskWasCanceled())
+           return;
+         
+         // first the assignment is done without a specific role
+-        pt.init(topicGroup, dimTryAlloc, tryP * 4711 + 8812);
++        assignPersonsToSessions(topicGroup, dimTryAlloc, tryP * 4711 + 8812);
+         
+         // thereafter the roles are assigned
+-        pt.assignRoles();
++        assignRoles();
+ 
+         // System.out.print(pt);
+         
+-        if (pt.isValidSolution())
+-          addSolution(pt.createSolution(solutions.size()));
++        if (isValidSolution())
++          addSolution(createSolution(solutions.size()));
+       }
+     }
++  }
++  
++  /**
++   * Return true if the PTAlloc currently holds a valid solution.
++   * 
++   * @return true if the solution is valid, false otherwise.
++   */
++	public boolean isValidSolution()
++	{
++	  return solved;
++	}
++
++  /**
++   * Allocates global data structures for the algorithm.
++   * It creates the necessary arrays which are used in subsequent
++   * calculations. Each calculation must be set up by a call to 
++   * assignPersonsToSessions().
++   */
++  public void allocate()
++  {
++    debug            = false;
++    this.solved      = false;
+     
+-    taskDone = true;
++    int     dimPersons     = persons.getNumber();
++    int     dimTopics      = topics.getNumber();
++    int     dimRoles       = roles.getNumber();
++    int     nAssignments = dimPersons * dimTopics / dimSessions;
++    
++    bestAssignment   = new int[dimPersons][dimTopics];
++    topicRole        = new int[dimTopics][dimRoles + 1];
++    personRole       = new int[dimPersons][dimRoles  + 1];
++    seqPersons       = new int[nAssignments + 1][2];
++    
++    // Prepare a number formatter
++    compactFormat = NumberFormat.getInstance();
++    compactFormat.setMinimumFractionDigits(2);
++    compactFormat.setMaximumFractionDigits(2);
++    
++    if (debug)
++    {
++      System.out
++          .println("\nPersonen und Pr?ferenzen bei gegebener Themengruppierung:");
++      System.out.println("\n" + persons.emptyName() + ":   "
++                         + topics.toHeaderString("   "));
++      for (int p = 0;  p < dimPersons;  p++)
++      {
++        System.out.print(persons.getName(p) + ":");
++        for (int t = 0;  t < dimTopics; t++)
++        {
++          String tmp = "    " + persons.getPreferenceIndex(p, t);
++          System.out.print(tmp.substring(tmp.length() - 4));
++        }
++        
++        System.out.println();
++      }
++    }
+   }
++
++  /**
++   * Initialize a calculation by performing a first assignment 
++   * without specific roles.
++   * 
++   * @param groups  the group of topics to work on.
++   * @param tries   the maximum number of tries.
++   * @param seed    the seed for the random number generator.
++   */
++  public void assignPersonsToSessions(int[] groups, int tries, long seed)
++  {
++    int     dimPersons     = persons.getNumber();
++    int     dimTopics      = topics.getNumber();
++    int     dimSessions    = getSessionNumber();
++    int     unassignedRole = getRoles().getNumber() + 1;  // Marker for an unassigned role
++
++    // Start a new solution
++    solution = new Solution(this);
++    
++    // Remember the topic grouping in the solution
++    for (int gr = 0;  gr < groups.length;  ++gr)
++    {
++      int groupIndex = 0;
++      
++      for (int t = 0;  t < dimTopics;  ++t)
++        if (groups[t] == gr)
++          solution.setGroupElement(gr, groupIndex++, t);
++    }
++
++    // Erase bestAssignment
++    for (int person = 0;  person < dimPersons;  ++person)
++      Arrays.fill(bestAssignment[person], 0);
++    
++    // we generate a legal assignment as a starting point;
++    for (int gr = 0; gr < groups.length / dimSessions; gr++)
++      for (int p = 0; p < dimPersons; p++)
++      {
++        int seq = 0;
++        
++        for (int t = 0; t < dimTopics; t++)
++          if (groups[t] == gr)
++          {
++            if (p / (dimPersons / dimSessions) == seq)
++              solution.setRole(p, t, unassignedRole);
++
++            ++seq;
++          }
++      }
++
++    int target = solution.calculateTargetValue();
++
++    if (debug)
++    {
++      System.out.println("\n" + persons.emptyName() + ":  "
++                         + topics.toHeaderString(" "));
++      System.out.println(this + "target=" + target);
++    }
++
++    // again we apply simulated annealing; we try to swap people
++    // between sessions of the same group
++
++    // simulated annealing; we look for better solutions and
++    // adopt them in most cases (80%) as a starting point for the next trial
++    // sometimes we accept worse solutions and temporarily lower the
++    // expectation level
++
++    int bestTargetTotal = Integer.MAX_VALUE;
++    int bestTarget = Integer.MAX_VALUE;
++    int lastTarget = target;
++    Random rand = new Random();
++    
++    if (seed != 0)
++      rand = new Random(seed);
++
++    for (int y = 0; y < tries; y++)
++    {
++      // modify constellation, later restore possible
++      int p1 = 0, t1 = 0, p2 = 0, t2 = 0;
++      p1 = rand.nextInt(dimPersons);
++      t1 = rand.nextInt(dimTopics / dimSessions);
++      // look for a topic the selected person is assigned to
++      for (int t = 0; t < dimTopics; t++)
++        if (solution.getRole(p1, t) > 0)
++          if (t1-- <= 0)
++          {
++            t1 = t;
++            break;
++          }
++
++        // pick a member of another topic of the same session
++      int n = rand.nextInt(dimPersons - dimPersons / dimSessions);
++      
++      for (int t = 0;  t < dimTopics;  t++)
++        if (groups[t] == groups[t1] && t1 != t)
++          for (int p = 0;  p < dimPersons;  p++)
++            if (solution.getRole(p, t) > 0 && n-- <= 0)
++            {
++              p2 = p;
++              t2 = t;
++              break;
++            }
++      
++      solution.setRole(p1, t1, 0);
++      solution.setRole(p1, t2, unassignedRole);
++      solution.setRole(p2, t1, unassignedRole);
++      solution.setRole(p2, t2, 0);
++
++      // calculate target value
++      lastTarget = target;
++      target = solution.calculateTargetValue();
++
++      if (debug)
++      {
++        System.out.println("\np1=" + p1 + " t1=" + topics.getName(t1)
++                           + "  /  p2=" + p2 + " t2=" + topics.getName(t2));
++        System.out.println(this + "target=" + target + "   (" + bestTarget
++                           + ")  (" + bestTargetTotal + ")");
++      }
++
++      if (target < bestTargetTotal)
++      {
++        // check if solution is known already
++        boolean known = false;
++        
++        if (!known)
++        {
++          bestTargetTotal = target;
++          // store best result
++          for (int p = 0; p < dimPersons; p++)
++            for (int t = 0; t < dimTopics; t++)
++              bestAssignment[p][t] = solution.getRole(p, t);
++
++          if (debug)
++            System.out.println("BEST ASSIGNMENT");
++        }
++      }
++      
++      if (target < bestTarget)
++      {
++        if (rand.nextInt(100) >= 100)
++        {
++          // take back
++          solution.setRole(p1, t1, unassignedRole);
++          solution.setRole(p1, t2, 0);
++          solution.setRole(p2, t1, 0);
++          solution.setRole(p2, t2, unassignedRole);
++          target = lastTarget;
++          
++          //if (debug)
++            System.out.println("better, but staying.");
++        }
++        else
++        {
++          // accept
++          bestTarget = target;
++          
++          if (debug)
++            System.out.println("better, moving.");
++        }
++      }
++      else
++      {
++        if (rand.nextInt(100) >= 0)
++        {
++          // take back
++          solution.setRole(p1, t1, unassignedRole);
++          solution.setRole(p1, t2, 0);
++          solution.setRole(p2, t1, 0);
++          solution.setRole(p2, t2, unassignedRole);
++          target = lastTarget;
++          if (debug)
++            System.out.println("worse, staying");
++        }
++        else
++        {
++          // accept
++          bestTarget = target;
++          //if (debug)
++            System.out.println("worse, but moving.");
++        }
++      }
++    }
++
++    for (int p = 0; p < dimPersons; p++)
++      for (int t = 0; t < dimTopics; t++)
++        solution.setRole(p, t, bestAssignment[p][t]);
++
++    if (debug)
++    {
++      target = solution.calculateTargetValue();
++      System.out.println(this + "target=" + target + "  bestTargetTotal="
++                         + bestTargetTotal);
++    }
++  }
++
++  /**
++   * Assign the roles to produce a solution.
++   * After calling this method, isValidSoution() should be used
++   * to check whether a valid solution has been reached.
++   */
++  void assignRoles()
++  {
++    int dimPersons     = persons.getNumber();
++    int dimTopics      = topics.getNumber();
++    int dimSessions    = getSessionNumber();
++    int dimRoles       = getRoles().getNumber();
++    int nAssignments   = dimPersons * dimTopics / dimSessions;
++    int unassignedRole = dimRoles + 1; // Marker for an unassigned role
++
++    for (int topic = 0;  topic < dimTopics;  ++topic)
++      Arrays.fill(topicRole[topic], 0);
++
++    for (int person = 0;  person < dimPersons;  ++person)
++      Arrays.fill(personRole[person], 0);
++
++    for (int as = 0;  as < nAssignments + 1;  ++as)
++      Arrays.fill(seqPersons[as], 0);
++
++    int topicLimit  = dimPersons / dimSessions / dimRoles;
++    int personLimit = dimTopics / dimSessions / dimRoles;
++
++    // for every role we repeat the same procedure:
++    // we try to allocate the role according to the preference of the person
++    // we perform backtracking to find a valid solution
++    boolean debug = false;
++
++    if (debug)
++      System.out.println(this);
++
++    // we define the sequence in which we want to assign roles to the persons
++    // we change the sequence of persons for each step to prevent a bias
++		int noStep   = 0;
++		int maxSteps = 100000; // Integer.MAX_VALUE;
++		solved = true;
++		
++    for (int n = 0; n < nAssignments; n++)
++    {
++      int p = n % dimPersons;
++      int cycle = n / dimPersons;
++      seqPersons[n][0] = (cycle % 2 == 0) ? p : dimPersons - 1 - p;
++    }
++
++    for (int n = 0; n < nAssignments; n++)
++    {
++			if (++noStep > maxSteps)
++			{
++			  solved = false;
++			  break;
++			}
++			
++      int r = (n / (nAssignments / dimRoles)) + 1;
++      int p = seqPersons[n][0];
++      boolean ok = false;
++      int t = 0, prio;
++      
++      for (prio = seqPersons[n][1]; prio < dimTopics; prio++)
++      {
++        t = persons.getPreferenceIndex(p, prio);
++        
++        if (solution.getRole(p, t) == unassignedRole)
++        {
++          if (debug)
++            System.out.print("n=" + n + " r=" + r + " p=" + p + " t=" + t);
++          
++          // try to assign the role
++          if (topicRole[t][r] < topicLimit && personRole[p][r] < personLimit)
++          {
++            solution.setRole(p, t, r);
++            topicRole[t][r] += 1;
++            personRole[p][r] += 1;
++            
++            if (debug)
++              System.out.println("  assigned.");
++            
++            ok = true;
++            break;
++          }
++          else
++          {
++            ok = false;
++            
++            if (debug)
++              System.out.println("  not possible.");
++          }
++        }
++      }
++      
++      if (ok)
++      { // going forward, reset minPrio for next n
++        seqPersons[n][1] = prio + 1;
++        seqPersons[n + 1][1] = 0;
++      }
++      else
++      { // back tracking
++        n -= 1;
++
++        p = seqPersons[n][0];
++        t = persons.getPreferenceIndex(p, seqPersons[n][1] - 1);
++        solution.setRole(p, t, unassignedRole);
++        topicRole[t][r] -= 1;
++        personRole[p][r] -= 1;
++        n -= 1;
++      }
++    }
++    
++		// System.out.println (noStep + " steps performed.");
++  }
++
++ 
++  /**
++   * Create a Solution object from the current solution.
++   * 
++   * @param index this is the current number of the solution.
++   *              Will be used to give the solution an initial name
++   *              ("Solution &lt;index&gt;").
++   * @return the new Solution object.
++   */
++  public Solution createSolution(int index)
++  {
++    if (!solved)
++      return null;
++
++    solution.evaluate();
++    
++    StringBuffer name = new StringBuffer("Solution " + (index+1));
++    name.append(": ");
++    name.append(compactFormat.format(solution.getMeanDeviation()));
++    name.append(" - ");
++    name.append(compactFormat.format(solution.getMaximumDeviation()));
++    name.append(" - ");
++    name.append(compactFormat.format(solution.getStandardDeviation()));
++    solution.setName(name.toString());
++    
++    return solution;
++  }
++  
+ }
+\ No newline at end of file
+
+Modified: trunk/openSess/SolverConstructor.java
+===================================================================
+--- trunk/openSess/SolverConstructor.java	2005-03-15 13:52:49 UTC (rev 17)
++++ trunk/openSess/SolverConstructor.java	2005-03-20 13:54:06 UTC (rev 18)
+@@ -107,11 +107,13 @@
+       currentSolution.setName(getString(attributes, "name", solution));
+       main.getSolver().addSolution(currentSolution);
+     }
++/*
+     else if (qName.equals("statistics"))
+       currentSolution.setStatistics(getDouble(attributes, "meandev", 0.0),
+                                     getDouble(attributes, "maxdev",  0.0),
+                                     getDouble(attributes, "stddev",  0.0),
+                                     getInt(attributes, "target",     0));
++*/                                    
+     else if (qName.equals("topicGroups"))
+       group = -1;
+     else if (qName.equals("topicGroup"))
+
+Added: trunk/openSess/TaskMonitor.java
+===================================================================
+--- trunk/openSess/TaskMonitor.java	2005-03-15 13:52:49 UTC (rev 17)
++++ trunk/openSess/TaskMonitor.java	2005-03-20 13:54:06 UTC (rev 18)
+@@ -0,0 +1,173 @@
++/*
++ * Copyright 2005 Andreas Wickner
++ * 
++ * Created:     2005-03-19 
++ * Revision ID: $Id$
++ * 
++ * This file is part of OpenSess.
++ * OpenSess is free software; you can redistribute it and/or modify it 
++ * under the terms of the GNU General Public License as published by 
++ * the Free Software Foundation; either version 2 of the License, or 
++ * (at your option) any later version.
++ *
++ * OpenSess is distributed in the hope that it will be useful, but 
++ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
++ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
++ * for more details.
++ *
++ * You should have received a copy of the GNU General Public License along 
++ * with OpenSess; if not, write to the Free Software Foundation, Inc., 
++ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
++ */
++package openSess;
++
++/**
++ * TaskMonitor is a base class for classes that must perform
++ * a task in a different (non-GUI) thread. The task progress can
++ * be visualized with a ProgressMonitor.
++ * 
++ * Classes that extend TaskMonitor should:
++ * 
++ * - Redefine doTask() to contain the work to be done in the
++ *   new thread.
++ * - Check taskWasCanceled() frequently to see whether the task
++ *   was canceled from the outside (e.g. by the GUI user). If this
++ *   is the case, doTask() should terminate as soon as possible.
++ * - Call setCurrent() whenever there is progress to report. The value
++ *   passed to setCurrent() should be appropriate for the ProgressMonitor.
++ * - Call setMessage() with progress messages if appropriate.
++ * 
++ * @author andreas
++ */
++public class TaskMonitor
++{
++  private int              current      = 0;
++  private boolean          taskDone     = false;
++  private boolean          taskCanceled = false;
++  private String           statMessage;
++  
++  /**
++   * Return the current progress.
++   * 
++   * @return the current progress.
++   */
++  public int getCurrent()
++  {
++    return current;
++  }
++
++  /**
++   * Set the current progress (must be in the valid range of the
++   * ProgressMonitor used).
++   *  
++   * @param current the current progress.
++   */
++  public void setCurrent(int current)
++  {
++    this.current = current;
++  }
++  
++  /**
++   * Can be used to cancel the task from the outside.
++   */
++  public void stop()
++  {
++    taskCanceled = true;
++    statMessage = null;
++  }
++
++  /**
++   * Returns whether the task was canceled from outside.
++   * 
++   * @return true if the task has been canceled.
++   */
++  public boolean taskWasCanceled()
++  {
++    return taskCanceled;
++  }
++
++  /**
++   * Returns whether the task has completed (by itself).
++   * 
++   * @return true if completed, false otherwise.
++   */
++  public boolean isDone()
++  {
++    return taskDone;
++  }
++
++  /**
++   * Returns the most recent status message, or null
++   * if there is no current status message.
++   * 
++   * @return a status message.
++   */
++  public String getMessage()
++  {
++    return statMessage;
++  }
++
++  /**
++   * Sets the current status message.
++   * 
++   * @param message
++   */
++  public void setMessage(String message)
++  {
++    statMessage = message;
++  }
++  
++  /**
++   * Start the task: Call the method doTask() in its own thread.
++   */
++  public void startTask()
++  {
++    final TaskMonitor theMonitorItself = this;
++    
++    final SwingWorker worker = new SwingWorker()
++    {
++      public Object construct()
++      {
++        current = 0;
++        taskDone = false;
++        taskCanceled = false;
++        statMessage = null;
++        return new SolverTask(theMonitorItself); 
++      }
++    };
++    
++    worker.start();
++  }
++
++  /**
++   * Derived classes should redefine this method with the work to
++   * be done.
++   */
++  protected void doTask()
++  {
++  }
++
++  /**
++   * SolverTask wraps the actual work to do in a way that is
++   * compatible with the SwingWorker.
++   * 
++   * @author andreas
++   */
++  private class SolverTask
++  {
++    /**
++     * The constructor contains the actual work to do
++     * (which is our solution calculation).
++     * 
++     * @param solver the Solver object.
++     * @param dimTryTopicClustering  the number of topic clusterings to try.
++     * @param dimTryPersonAssignment the number of topic/person assignments to try.
++     * @param dimTryAlloc            the maximum number of assignments to try.
++     */
++    public SolverTask(TaskMonitor monitor)
++    {
++      monitor.doTask();
++      monitor.taskDone = true;
++    }
++  };
++}
+
+Modified: trunk/openSess/Topics.java
+===================================================================
+--- trunk/openSess/Topics.java	2005-03-15 13:52:49 UTC (rev 17)
++++ trunk/openSess/Topics.java	2005-03-20 13:54:06 UTC (rev 18)
+@@ -11,7 +11,7 @@
+  * Copyright 2005 Gero Scholz, Andreas Wickner
+  * 
+  * Created:     2005-02-11 
+- * Revision ID: $Id$
++ * Revision ID: $Id: Topics.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -43,23 +43,22 @@
+   private int               rank[];
+   private int               rankInx[];
+   private int               dist[][];
+-  private int               dimPersons;
+ 
+   /**
+    * Creates a new Topics object with configuration data from a Solver object.
+    * 
+    * @param solver  a Solver object.
+    */
+-  public Topics(Solver solver)
++  public Topics(Solver solver, int dimTopics)
+   {
+     // create topic list
+     this.solver = solver;
+     names = new DefaultListModel();
+ 
+-    for (int t = 0; t < solver.dimTopics; t++)
++    for (int t = 0; t < dimTopics; t++)
+       names.addElement("Topic " + (t+1));
+ 
+-    dist = new int[solver.dimTopics][solver.dimTopics];
++    dist = new int[dimTopics][dimTopics];
+   }
+ 
+   /**
+@@ -111,30 +110,37 @@
+   protected void calcPrefs()
+   {
+     boolean debug = false;
+-    pref = new int[solver.dimTopics];
+-    for (int t = 0; t < solver.dimTopics; t++)
++    int dimTopics = getNumber();
++    int dimPersons = solver.getPersons().getNumber();
++    
++    pref = new int[dimTopics];
++    
++    for (int t = 0;  t < dimTopics;  t++)
+     {
+       pref[t] = 0;
+-      for (int p = 0; p < solver.dimPersons; p++)
++      for (int p = 0; p < dimPersons; p++)
+       {
+-        pref[t] += solver.getPersons().pref[p][t];
++        pref[t] += solver.getPersons().getPreference(p, t);
++        
+         if (debug)
+           System.out.println("Thema " + getName(t) + " pref+="
+-                             + solver.getPersons().pref[p][t]);
++                             + solver.getPersons().getPreference(p, t));
+       }
+     }
+ 
+     // calculate the total rank of each topic
+     // so that we can show topics ordered by rank if desired
+-    rank = new int[solver.dimTopics];
+-    rankInx = new int[solver.dimTopics];
++    rank = new int[dimTopics];
++    rankInx = new int[dimTopics];
+ 
+     int prefH[] = (int[]) pref.clone();
+-    for (int t = 0; t < solver.dimTopics; t++)
++    
++    for (int t = 0; t < dimTopics; t++)
+     {
+       int min = Integer.MAX_VALUE;
+       int tmin = 0;
+-      for (int tt = 0; tt < solver.dimTopics; tt++)
++      
++      for (int tt = 0; tt < dimTopics; tt++)
+       {
+         if (prefH[tt] < min)
+         {
+@@ -145,6 +151,7 @@
+             System.out.println("rank " + tt + ", value " + min);
+         }
+       }
++      
+       rankInx[t] = tmin;
+       prefH[tmin] = Integer.MAX_VALUE;
+       if (debug)
+@@ -162,9 +169,12 @@
+    */
+   protected void calcDist(Persons persons)
+   {
+-    for (int t = 0; t < solver.dimTopics; t++)
++    int dimTopics = getNumber();
++    int dimPersons = solver.getPersons().getNumber();
++    
++    for (int t = 0;  t < dimTopics;  t++)
+     {
+-      for (int tt = 0; tt < solver.dimTopics; tt++)
++      for (int tt = 0;  tt < dimTopics;  tt++)
+       {
+         if (t == tt)
+           dist[t][tt] = 0;
+@@ -173,9 +183,9 @@
+         else
+         {
+           int sum = 0, dif;
+-          for (int p = 0; p < solver.dimPersons; p++)
++          for (int p = 0;  p < dimPersons;  p++)
+           {
+-            dif = persons.pref[p][t] - persons.pref[p][tt];
++            dif = persons.getPreference(p, t) - persons.getPreference(p, tt);
+             sum += dif * dif;
+           }
+           dist[tt][t] = dist[t][tt] = sum;
+@@ -195,9 +205,10 @@
+   protected int hashSum(int vec[])
+   {
+     int hashVal = 0;
++    int dimTopics = getNumber();
+     
+     for (int n = 0; n < vec.length; n++)
+-      hashVal += (n + 1) * (solver.dimTopics) * (vec[n] + 1) * (vec[n] + 1);
++      hashVal += (n + 1) * dimTopics * (vec[n] + 1) * (vec[n] + 1);
+ 
+     return hashVal;
+   }
+@@ -239,7 +250,7 @@
+     // 0,1,2, ..
+ 
+     // we start with a simple initial grouping
+-    int n = solver.dimTopics;
++    int n = getNumber();
+     int vec[] = new int[n];
+     int bestVec[] = new int[n];
+     for (int i = 0; i < n; i++)
+@@ -363,21 +374,23 @@
+    */
+   protected void normalize(int vec[])
+   {
++    int dimTopics = getNumber();
+     int gr = 0;
+-    for (int t = 0; t < solver.dimTopics; t++)
++    
++    for (int t = 0; t < dimTopics; t++)
+     {
+       if (vec[t] >= 100)
+         continue;
+       int vOld = vec[t];
+       vec[t] = 100 + gr;
+-      for (int tt = t + 1; tt < solver.dimTopics; tt++)
++      for (int tt = t + 1; tt < dimTopics; tt++)
+       {
+         if (vec[tt] == vOld)
+           vec[tt] = 100 + gr;
+       }
+       gr += 1;
+     }
+-    for (int t = 0; t < solver.dimTopics; t++)
++    for (int t = 0; t < dimTopics; t++)
+       vec[t] -= 100;
+   }
+ 
+@@ -445,13 +458,14 @@
+    */
+   protected String distToString()
+   {
++    int dimTopics = getNumber();
+     String s = new String();
+     String field;
+     s += "      " + toHeaderString("    ") + "\n";
+-    for (int t = 0; t < solver.dimTopics; t++)
++    for (int t = 0; t < dimTopics; t++)
+     {
+       s += " " + getName(t);
+-      for (int tt = 0; tt < solver.dimTopics; tt++)
++      for (int tt = 0; tt < dimTopics; tt++)
+       {
+         field = "     " + dist[t][tt];
+         s += field.substring(field.length() - 5);
+@@ -469,9 +483,10 @@
+    */
+   public String toHeaderString(String space)
+   {
++    int dimTopics = getNumber();
+     StringBuffer s = new StringBuffer();
+     
+-    for (int t = 0; t < solver.dimTopics; t++)
++    for (int t = 0; t < dimTopics; t++)
+       s.append(getName(t) + space);
+     
+     return s.toString();
+@@ -486,10 +501,11 @@
+    */
+   public String groupsToString(int groups[], int groupsCount)
+   {
++    int dimTopics = getNumber();
+     String s = new String();
+     for (int gr = 0; gr < groupsCount; gr++)
+     {
+-      for (int t = 0; t < solver.dimTopics; t++)
++      for (int t = 0; t < dimTopics; t++)
+       {
+         if (groups[t] != gr)
+           continue;
+@@ -507,8 +523,12 @@
+    */
+   public String toString()
+   {
++    int dimTopics = getNumber();
++    int dimPersons = solver.getPersons().getNumber();
++    
+     String s = new String();
+-    for (int t = 0; t < solver.dimTopics; t++)
++    
++    for (int t = 0;  t < dimTopics;  t++)
+     {
+       int tt = rankInx[t];
+       s += "      " + getName(tt) + " " + (pref[tt] + dimPersons) + "\n";
+
+
+

@@ -1,0 +1,391 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Opensess-svn] r17 - branches/alternative-assign/openSess
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/opensess-svn/2005-March/index.html" >
+   <LINK REL="made" HREF="mailto:opensess-svn%40lists.berlios.de?Subject=Re%3A%20%5BOpensess-svn%5D%20r17%20-%20branches/alternative-assign/openSess&In-Reply-To=%3C200503151352.j2FDqpgF030353%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000011.html">
+   <LINK REL="Next"  HREF="000013.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Opensess-svn] r17 - branches/alternative-assign/openSess</H1>
+    <B>Andreas Wickner at BerliOS</B> 
+    <A HREF="mailto:opensess-svn%40lists.berlios.de?Subject=Re%3A%20%5BOpensess-svn%5D%20r17%20-%20branches/alternative-assign/openSess&In-Reply-To=%3C200503151352.j2FDqpgF030353%40sheep.berlios.de%3E"
+       TITLE="[Opensess-svn] r17 - branches/alternative-assign/openSess">awickner at sheep.berlios.de
+       </A><BR>
+    <I>Tue Mar 15 14:52:51 CET 2005</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000011.html">[Opensess-svn] r16 - branches
+</A></li>
+        <LI>Next message: <A HREF="000013.html">[Opensess-svn] r18 - trunk/openSess
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#12">[ date ]</a>
+              <a href="thread.html#12">[ thread ]</a>
+              <a href="subject.html#12">[ subject ]</a>
+              <a href="author.html#12">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: awickner
+Date: 2005-03-15 14:52:49 +0100 (Tue, 15 Mar 2005)
+New Revision: 17
+
+Modified:
+   branches/alternative-assign/openSess/GlobalNewWindow.java
+   branches/alternative-assign/openSess/MainWindow.java
+   branches/alternative-assign/openSess/PTAlloc.java
+   branches/alternative-assign/openSess/Solver.java
+Log:
+Alternative assignment strategy implemented.
+GUI has been changed to use it, but there are no constraints checks so far.
+
+Modified: branches/alternative-assign/openSess/GlobalNewWindow.java
+===================================================================
+--- branches/alternative-assign/openSess/GlobalNewWindow.java	2005-03-15 13:43:51 UTC (rev 16)
++++ branches/alternative-assign/openSess/GlobalNewWindow.java	2005-03-15 13:52:49 UTC (rev 17)
+@@ -159,8 +159,11 @@
+       int roles    = getNumberOfRoles();
+       int sessions = getNumberOfSessions();
+       
+-      boolean topicsOk = (topics % (roles*sessions)) == 0;
+-      boolean personsOk = (persons % (roles*sessions)) == 0;
++      // temporarily disabled until algorithm question is solved.
++      // boolean topicsOk = (topics % (roles*sessions)) == 0;
++      // boolean personsOk = (persons % (roles*sessions)) == 0;
++      boolean topicsOk = true;
++      boolean personsOk = true;
+       
+       if (topicsOk &amp;&amp; personsOk)
+       {
+
+Modified: branches/alternative-assign/openSess/MainWindow.java
+===================================================================
+--- branches/alternative-assign/openSess/MainWindow.java	2005-03-15 13:43:51 UTC (rev 16)
++++ branches/alternative-assign/openSess/MainWindow.java	2005-03-15 13:52:49 UTC (rev 17)
+@@ -62,6 +62,7 @@
+   extends ChangeMonitor
+   implements ActionListener, CommandProcessor, XMLStateSaving
+ {
++  private final int          algorithm   = 1;
+   private final String       programName = &quot;OpenSess&quot;;
+   private final String       fileSuffix  = &quot;ose&quot;;
+   private JFrame             frame;
+@@ -396,7 +397,7 @@
+     rolePanel.hideEditor();
+     solutionPanel.hideEditor();
+     
+-    solver = new Solver(topicNumber, personNumber, roleNumber, sessionNumber);
++    solver = new Solver(topicNumber, personNumber, roleNumber, sessionNumber, algorithm);
+     
+     // reconfigure the panels
+     topicPanel.reconfigure(solver, solver.getTopics().getNames());
+
+Modified: branches/alternative-assign/openSess/PTAlloc.java
+===================================================================
+--- branches/alternative-assign/openSess/PTAlloc.java	2005-03-15 13:43:51 UTC (rev 16)
++++ branches/alternative-assign/openSess/PTAlloc.java	2005-03-15 13:52:49 UTC (rev 17)
+@@ -3,12 +3,13 @@
+ import java.text.NumberFormat;
+ import java.util.Arrays;
+ import java.util.Random;
++import java.util.Vector;
+ 
+ /*
+  * Copyright 2005 Gero Scholz, Andreas Wickner
+  * 
+  * Created:     2005-02-11 
+- * Revision ID: $Id$
++ * Revision ID: $Id: PTAlloc.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * 2005-02-14/AW: Changes to decrease excessive memory allocation/deallocation.
+  * 2005-02-22/GS: Algorithm bug fixes 
+@@ -44,7 +45,7 @@
+   private Solver       solver;
+   private Persons      persons;
+   private Topics       topics;
+-
++  private Roles        roles;
+   private boolean      debug;
+   private int          dimSessions;
+   private int          groups[];
+@@ -59,7 +60,8 @@
+   private double       meanDeviation, maxDeviation, stdDeviation;
+   private NumberFormat compactFormat;
+   private boolean      solved;
+-
++  private Random       rand;
++  
+   /**
+    * Return true if the PTAlloc currently holds a valid solution.
+    * 
+@@ -114,6 +116,7 @@
+     this.solver      = solver;
+     this.persons     = solver.getPersons();
+     this.topics      = solver.getTopics();
++    this.roles       = solver.getRoles();
+     this.dimSessions = solver.getSessionNumber();
+     this.solved      = false;
+     assigned         = new int[solver.dimPersons][solver.dimTopics];
+@@ -210,7 +213,7 @@
+     // expectation level
+ 
+     int bestTargetTotal = Integer.MAX_VALUE, bestTarget = Integer.MAX_VALUE, lastTarget = target;
+-    Random rand = new Random();
++    rand = new Random();
+     
+     if (seed != 0)
+       rand = new Random(seed);
+@@ -459,6 +462,122 @@
+   }
+ 
+   /**
++   * An alternative role assignment algorithm
++   *
++   */
++  public void assignRolesAlternative()
++  {
++    debug = false;
++    
++    if (debug)
++      System.out.println(&quot;Using role shuffling on initial matrix:\n&quot; + debugString());
++
++    // Determine the number of required roles per session (with minimum occurence)
++    int requiredRoles = 0;
++    
++    for (int r=0;  r &lt; roles.getNumber();  ++r)
++      requiredRoles += roles.getMinimumPerSession(r);
++      
++    if (debug)
++    	System.out.println(requiredRoles + &quot; roles are required per session.&quot;);
++
++    // Build a pool of possible roles to choose from for non-required roles.
++    Vector rolePool = new Vector();
++    
++    for (int r=0;  r &lt; roles.getNumber();  ++r)
++    {
++      int optional = roles.getMaximumPerSession(r) - roles.getMinimumPerSession(r);
++      
++      for (int i=0;  i &lt; optional;  ++i)
++      	rolePool.add(new Integer(r));
++    }
++
++    if (debug)
++    	System.out.println(&quot;For each session, there are &quot; + rolePool.size() + &quot; roles in the pool of optional roles.&quot;);
++    
++    // First, we go through each session and assign the roles with a minimum occurence
++    for (int t=0;  t &lt; topics.getNumber();  ++t)
++      for (int r=0;  r &lt; roles.getNumber();  ++r)
++        for (int n=0;  n &lt; roles.getMinimumPerSession(r);  ++n)
++          assigned[chooseMostInterestedPerson(t)][t] = r+1;
++
++    if (debug)
++    	System.out.println(&quot;\nAfter assigning the required roles:\n&quot; + debugString());
++    
++    // Now, we distribute the optional roles for each session
++    for (int t=0;  t &lt; topics.getNumber();  ++t)
++    {
++      // Make a copy of the complete rolePool
++      Vector pool = (Vector) rolePool.clone();
++      
++      // Count the unassigned persons in this session
++      // (this is done to enable this algorithm to cope with a varying 
++      // number of participants per session).
++      int unassigned = 0;
++      
++      for (int p=0;  p &lt; persons.getNumber();  ++p)
++        if (assigned[p][t] == 9)
++          ++unassigned;
++        
++      // Randomly remove roles from the pool until we have the right number
++      while (pool.size() &gt; unassigned)
++      {
++        int index = rand.nextInt(pool.size());
++        pool.remove(index);
++      }
++
++      if (pool.size() != unassigned)
++        System.out.println(&quot;CANNOT HAPPEN: pool size wrong.&quot;);
++      
++      // Assign the remaining roles in the pool
++      while (pool.size() &gt; 0)  
++      {
++        int index = rand.nextInt(pool.size());
++        int r     = ((Integer)pool.elementAt(index)).intValue();
++        pool.remove(index);
++        assigned[chooseMostInterestedPerson(t)][t] = r+1;
++      }
++    }
++    
++    if (debug)
++    	System.out.println(&quot;\nAfter assigning the other roles:\n&quot; + debugString());
++    
++    solved = true;
++    doStatistics();
++    
++    debug = false;
++  }
++  
++  /**
++   * Of all the participants in the session for topic t that have
++   * not yet been assigned a role, return the one with the highest 
++   * interest.
++   * 
++   * @param t the topic of the session.
++   * @return the most interested unassigned pearticipant.
++   */
++  protected int chooseMostInterestedPerson(int t)
++  {
++    // Of all the unassigned persons in this session,
++    // pick the one with the highest interest.
++    int bestPerson = -1;
++    int interest = 99999;
++    
++    for (int p=0;  p &lt; persons.getNumber();  ++p)
++      if (assigned[p][t] == 9)
++        if (persons.prefInx[p][t] &lt; interest)
++        {
++        	bestPerson = p;
++        	interest   = persons.prefInx[p][t];
++        }
++        
++    if (bestPerson &lt; 0)
++      System.out.println(&quot;CANNOT HAPPEN: no person left to choose.&quot;);
++        
++    return bestPerson;
++  }
++  
++  /**
+    * Evaluate the solution and set the statistical values.
+    */
+   protected void doStatistics()
+@@ -553,10 +672,39 @@
+     return s;
+   }
+   
++  public String debugString()
++  {
++    StringBuffer s = new StringBuffer();
++
++    s.append(&quot;\ngr: &quot;);
++    for (int t = 0; t &lt; solver.dimTopics; t++)
++      s.append(&quot;  &quot; + groups[t]);
++    
++    s.append(&quot;\n&quot;);
++
++    s.append(&quot;    &quot;);
++    for (int t = 0; t &lt; solver.dimTopics; t++)
++      s.append(&quot; T&quot; + t);
++    
++    s.append(&quot;\n&quot;);
++    
++    for (int p = 0; p &lt; solver.dimPersons; p++)
++    {
++      s.append(&quot;P&quot; + p + &quot;: &quot;);
++
++      for (int t = 0; t &lt; solver.dimTopics; t++)
++        s.append(&quot;  &quot; + assigned[p][t]);
++      
++      s.append(&quot;\n&quot;);
++    }
++    
++    return s.toString();
++  }
++  
+   public String toString()
+   {
+-		if (!solved) 
+-		  return &quot;suppressing output of unsolved matrix ...\n&quot;;
++//		if (!solved) 
++//		  return &quot;suppressing output of unsolved matrix ...\n&quot;;
+     
+     // return the final allocation matrix
+     StringBuffer s = new StringBuffer(persons.emptyName() + &quot;   &quot; + topics.toHeaderString(&quot; &quot;) + &quot;\n&quot;);
+
+Modified: branches/alternative-assign/openSess/Solver.java
+===================================================================
+--- branches/alternative-assign/openSess/Solver.java	2005-03-15 13:43:51 UTC (rev 16)
++++ branches/alternative-assign/openSess/Solver.java	2005-03-15 13:52:49 UTC (rev 17)
+@@ -2,7 +2,7 @@
+  * Copyright 2005 Gero Scholz, Andreas Wickner
+  * 
+  * Created:     2005-02-11 
+- * Revision ID: $Id$
++ * Revision ID: $Id: Solver.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * 2005-02-14/AW: Changes to decrease excessive memory allocation/deallocation
+  * 2005-02-22/GS: Algorithm bug fixes
+@@ -56,7 +56,7 @@
+                                                 // favors evenly distributed solutions; try values between
+                                                 // 0 and 100 (or greater); large values will usually tend
+                                                 // to make the overall result worse
+-
++  private int              algorithm;
+   private Topics           topics;
+   private Persons          persons;
+   private Roles            roles;
+@@ -88,14 +88,17 @@
+    * @param dimPersons  the number of persons.
+    * @param dimRoles    the number of roles.
+    * @param dimSessions the number of sessions.
++   * @param algorithm   the algorithm to use (0 or 1).
+    */
+-  public Solver(int dimTopics, int dimPersons, int dimRoles, int dimSessions)
++  public Solver(int dimTopics, int dimPersons, int dimRoles, int dimSessions,
++                int algorithm)
+   {
+     this.dimTopics   = dimTopics;
+     this.dimPersons  = dimPersons;
+     this.dimRoles    = dimRoles;
+     this.dimSessions = dimSessions;
+-
++    this.algorithm   = algorithm;
++    
+     topics        = new Topics(this);
+     persons       = new Persons(this);
+     roles         = new Roles(this);
+@@ -353,7 +356,10 @@
+         pt.init(topicGroup, dimTryAlloc, tryP * 4711 + 8812);
+         
+         // thereafter the roles are assigned
+-        pt.assignRoles();
++        if (algorithm == 0)
++          pt.assignRoles();
++        else
++          pt.assignRolesAlternative();
+ 
+         // System.out.print(pt);
+         
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000011.html">[Opensess-svn] r16 - branches
+</A></li>
+	<LI>Next message: <A HREF="000013.html">[Opensess-svn] r18 - trunk/openSess
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#12">[ date ]</a>
+              <a href="thread.html#12">[ thread ]</a>
+              <a href="subject.html#12">[ subject ]</a>
+              <a href="author.html#12">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/opensess-svn">More information about the Opensess-svn
+mailing list</a><br>
+</body></html>

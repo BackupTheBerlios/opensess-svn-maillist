@@ -1,0 +1,500 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Opensess-svn] r14 - in trunk: . openSess
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/opensess-svn/2005-March/index.html" >
+   <LINK REL="made" HREF="mailto:opensess-svn%40lists.berlios.de?Subject=Re%3A%20%5BOpensess-svn%5D%20r14%20-%20in%20trunk%3A%20.%20openSess&In-Reply-To=%3C200503091327.j29DRjOn017215%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000008.html">
+   <LINK REL="Next"  HREF="000010.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Opensess-svn] r14 - in trunk: . openSess</H1>
+    <B>Andreas Wickner at BerliOS</B> 
+    <A HREF="mailto:opensess-svn%40lists.berlios.de?Subject=Re%3A%20%5BOpensess-svn%5D%20r14%20-%20in%20trunk%3A%20.%20openSess&In-Reply-To=%3C200503091327.j29DRjOn017215%40sheep.berlios.de%3E"
+       TITLE="[Opensess-svn] r14 - in trunk: . openSess">awickner at sheep.berlios.de
+       </A><BR>
+    <I>Wed Mar  9 14:27:45 CET 2005</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000008.html">[Opensess-svn] r13 - tags
+</A></li>
+        <LI>Next message: <A HREF="000010.html">[Opensess-svn] r15 - trunk/openSess
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#9">[ date ]</a>
+              <a href="thread.html#9">[ thread ]</a>
+              <a href="subject.html#9">[ subject ]</a>
+              <a href="author.html#9">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: awickner
+Date: 2005-03-09 14:27:43 +0100 (Wed, 09 Mar 2005)
+New Revision: 14
+
+Modified:
+   trunk/Makefile
+   trunk/openSess/EditRoleWindow.java
+   trunk/openSess/ListEditWindow.java
+   trunk/openSess/Roles.java
+   trunk/openSess/SolverConstructor.java
+Log:
+Added minimum and maximum occurences to roles:
+- in the EditRoleWindow
+- in the Roles class
+- in the methods that save to and restore from XML.
+
+Modified: trunk/Makefile
+===================================================================
+--- trunk/Makefile	2005-03-06 12:49:05 UTC (rev 13)
++++ trunk/Makefile	2005-03-09 13:27:43 UTC (rev 14)
+@@ -17,7 +17,7 @@
+ sourceTarget: 
+ 	@echo &quot;Creating $(SOURCE_TARGET)...&quot;
+ 	@rm -f $(SOURCE_TARGET)
+-	@zip $(SOURCE_TARGET) README-SOURCE LICENSE RELEASE BUILD openSess/*.java help/*
++	@zip $(SOURCE_TARGET) README-SOURCE LICENSE COPYING RELEASE BUILD openSess/*.java help/*
+ 
+ winTarget: exeFiles
+ 	@echo &quot;Creating $(WIN_TARGET)...&quot;
+@@ -25,7 +25,7 @@
+ 	@mv -f using_javaw.exe OpenSess.exe
+ 	@mv -f using_java.exe OpenSessConsole.exe
+ 	@rm -f $(WIN_TARGET)
+-	@zip $(WIN_TARGET) README-WIN LICENSE RELEASE INSTALL openSess/*.class help/* OpenSess.exe OpenSessConsole.exe
++	@zip $(WIN_TARGET) README-WIN LICENSE RELEASE COPYING INSTALL openSess/*.class help/* OpenSess.exe OpenSessConsole.exe
+ 
+ siteTarget: 
+ 	@echo &quot;Creating $(SITE_TARGET)...&quot;
+
+Modified: trunk/openSess/EditRoleWindow.java
+===================================================================
+--- trunk/openSess/EditRoleWindow.java	2005-03-06 12:49:05 UTC (rev 13)
++++ trunk/openSess/EditRoleWindow.java	2005-03-09 13:27:43 UTC (rev 14)
+@@ -1,11 +1,25 @@
+ package openSess;
++import java.awt.GridBagConstraints;
++import java.awt.GridBagLayout;
++import java.awt.Insets;
++import java.awt.event.ActionEvent;
++import java.awt.event.FocusEvent;
++
++import javax.swing.BorderFactory;
++import javax.swing.ComboBoxModel;
++import javax.swing.JFormattedTextField;
+ import javax.swing.JFrame;
++import javax.swing.JLabel;
++import javax.swing.JPanel;
++import javax.swing.border.Border;
++import javax.swing.border.EtchedBorder;
++import javax.swing.border.TitledBorder;
+ 
+ /*
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     17.02.2005
+- * Revision ID: $Id$
++ * Revision ID: $Id: EditRoleWindow.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -31,6 +45,10 @@
+ public class EditRoleWindow
+   extends ListEditWindow
+ {
++  private JFormattedTextField minField, maxField;
++  private Roles               roles;
++  private int                 selected;
++  
+   /**
+    * Constructs an EditRoleWindow.
+    * 
+@@ -40,4 +58,109 @@
+   {
+     super(frame, &quot;Edit Role&quot;);
+   }
++  
++  /**
++   * Adds fields for editing the minimum and maximum occurences of roles.
++   */
++  protected void addAdditionalComponents(JPanel panel)
++  {
++    JPanel occursPanel = new JPanel();
++    occursPanel.setLayout(new GridBagLayout());
++    Border border = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
++    TitledBorder titled = BorderFactory.createTitledBorder(border, &quot;Occurences per session&quot;);
++    titled.setTitleJustification(TitledBorder.LEFT);
++    occursPanel.setBorder(titled);
++    panel.add(occursPanel);
++
++    GridBagConstraints c = new GridBagConstraints();
++    c.gridx   = 0;
++    c.gridy   = 0;
++    c.insets  = new Insets(5, 5, 5, 5);
++    c.anchor  = GridBagConstraints.LINE_START;
++    occursPanel.add(new JLabel(&quot;Minimum per session:&quot;), c);
++    c.gridy   = 1;
++    occursPanel.add(new JLabel(&quot;Maximum per session:&quot;), c);
++    c.gridx   = 1;
++    c.gridy   = 0;
++    c.fill    = GridBagConstraints.HORIZONTAL;
++    c.weightx = 1.0;
++    minField = new JFormattedTextField();
++    minField.setValue(new Integer(3));
++    minField.setColumns(5);
++    minField.addActionListener(this); // react to VK_ENTER
++    minField.addFocusListener(this);  // react to FocusLost
++    occursPanel.add(minField, c);
++    c.gridy = 1;
++    maxField = new JFormattedTextField();
++    maxField.setValue(new Integer(3));
++    maxField.setColumns(5);
++    maxField.addActionListener(this); // react to VK_ENTER
++    maxField.addFocusListener(this);  // react to FocusLost
++    occursPanel.add(maxField, c);
++  }
++  
++  /**
++   * Displays data before the window is displayed.
++   */
++  protected void additionalEditSetup(ComboBoxModel model, Solver solver, int selected,
++                                     ChangeMonitor changeMonitor)
++  {
++    updateOccurences(solver, selected);
++  }
++  
++  /**
++   * Redisplays data when the role selection changes.
++   */
++  protected void additionalChangesOnSelection(Solver solver, int selected)
++  {
++    updateOccurences(solver, selected);
++  }
++
++  /**
++   * Display the current occurence data
++   * 
++   * @param solver   the Solver object containing configuration data.
++   * @param role     the index of the currently selected object.
++   */
++  protected void updateOccurences(Solver solver, int role)
++  {
++    roles    = solver.getRoles();
++    selected = role;
++    int min  = roles.getMinimumPerSession(role);
++    int max  = roles.getMaximumPerSession(role);
++    
++    minField.setValue(new Integer(min));
++    maxField.setValue(new Integer(max));
++  }
++
++  /**
++   * Read the occurences fields when VK_ENTER was pressed.
++   */
++  protected void additionalActionPerformed(ActionEvent e)
++  {
++    Object source = e.getSource();
++    
++    if (source == minField || source == maxField)
++      setRoleOccurences();
++  }
++
++  /**
++   * Read the occurences fields when the focus changed.
++   */
++  protected void additionalFocusLost(FocusEvent e)
++  {
++    Object source = e.getSource();
++    
++    if (source == minField || source == maxField)
++      setRoleOccurences();
++  }
++  
++  /**
++   * Read the text fields and set the role values accordingly.
++   */
++  protected void setRoleOccurences()
++  {
++    roles.setMinimumPerSession(selected, getIntFromField(minField));
++    roles.setMaximumPerSession(selected, getIntFromField(maxField));
++  }
+ }
+
+Modified: trunk/openSess/ListEditWindow.java
+===================================================================
+--- trunk/openSess/ListEditWindow.java	2005-03-06 12:49:05 UTC (rev 13)
++++ trunk/openSess/ListEditWindow.java	2005-03-09 13:27:43 UTC (rev 14)
+@@ -4,6 +4,7 @@
+ import java.awt.event.ActionListener;
+ import java.awt.event.FocusEvent;
+ import java.awt.event.FocusListener;
++import java.text.ParseException;
+ 
+ import javax.swing.AbstractButton;
+ import javax.swing.BorderFactory;
+@@ -13,6 +14,7 @@
+ import javax.swing.JButton;
+ import javax.swing.JComboBox;
+ import javax.swing.JDialog;
++import javax.swing.JFormattedTextField;
+ import javax.swing.JFrame;
+ import javax.swing.JLabel;
+ import javax.swing.JOptionPane;
+@@ -23,7 +25,7 @@
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     16.02.2005
+- * Revision ID: $Id$
++ * Revision ID: $Id: ListEditWindow.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -100,12 +102,12 @@
+     editPanel.add(new JLabel(&quot;Name:&quot;));
+     editPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+     nameField = new JTextField();
+-    nameField.setActionCommand(&quot;set&quot;);
+     nameField.addActionListener(this); // react to VK_ENTER
+     nameField.addFocusListener(this);  // react to FocusLost
+     editPanel.add(nameField);
+     
+     addAdditionalComponents(rootPanel);
++    rootPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+     
+     JPanel buttonPanel = new JPanel();
+     buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
+@@ -230,9 +232,6 @@
+           redisplay();
+         }
+       }
+-      else if (command.equals(&quot;set&quot;))
+-      {
+-      }
+       else if (command.equals(&quot;close&quot;))
+       {
+         setVisible(false);
+@@ -256,10 +255,23 @@
+    */
+   public void focusLost(FocusEvent e)
+   {
+-    setObjectName(false);
++    if (e.getSource() == nameField)
++      setObjectName(false);
++    
++    additionalFocusLost(e);
+   }
+ 
+   /**
++   * Derived classes can override this method if they need
++   * control over focus changes.
++   * 
++   * @param e the FocusEvent.
++   */
++  protected void additionalFocusLost(FocusEvent e)
++  {
++  }
++  
++  /**
+    * Set the name of the currently selected object to the value of
+    * the text field. If the parameter is true, try to advance the
+    * current selection to the next object.
+@@ -361,4 +373,23 @@
+       
+     return -1;
+   }
++  
++  /**
++   * Get the value of a JFormattedField as an int.
++   * 
++   * @param field the field.
++   * @return the value, converted to int.
++   */
++  protected int getIntFromField(JFormattedTextField field)
++  {
++    try
++    {
++      field.commitEdit();
++    }
++    catch (ParseException ex)
++    {
++    }
++    
++    return ((Integer)field.getValue()).intValue();
++  }
+ }
+
+Modified: trunk/openSess/Roles.java
+===================================================================
+--- trunk/openSess/Roles.java	2005-03-06 12:49:05 UTC (rev 13)
++++ trunk/openSess/Roles.java	2005-03-09 13:27:43 UTC (rev 14)
+@@ -7,7 +7,7 @@
+  * Copyright 2005 Gero Scholz, Andreas Wickner
+  * 
+  * Created:     2005-02-11
+- * Revision ID: $Id$
++ * Revision ID: $Id: Roles.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * 2005-02-17/AW: Complete rewrite for GUI.
+  * 
+@@ -50,7 +50,8 @@
+   implements XMLStateSaving
+ {
+   private DefaultListModel names;
+-
++  private int              minPerSession[], maxPerSession[];
++  
+   /**
+    * Constructs a new Roles object from information in the Solver object.
+    * 
+@@ -59,10 +60,19 @@
+   public Roles(Solver solver)
+   {
+     names = new DefaultListModel();
+-
+-    for (int role = 0;  role &lt; solver.dimRoles;  ++role)
++    int dimRoles = solver.dimRoles;
++    minPerSession = new int[dimRoles];
++    maxPerSession = new int[dimRoles];
++    
++    for (int role = 0;  role &lt; dimRoles;  ++role)
++    {
+       names.addElement(&quot;Role &quot; + (role+1));
+-  
++      minPerSession[role] = solver.getPersons().getNumber() 
++      											/ solver.getSessionNumber()
++                            / dimRoles;
++      maxPerSession[role] = minPerSession[role];
++    }
++    
+     if (getNumber() &gt; 0)
+       setName(0, &quot;Speaker&quot;);
+     
+@@ -137,6 +147,54 @@
+   }
+   
+   /**
++   * Return the minimum occurence of the specified role per session.
++   * NOTE: The first role has index 0.
++   * 
++   * @param index the index of a role.
++   * @return the minimum occurences of this role per session.
++   */
++  public int getMinimumPerSession(int index)
++  {
++    return minPerSession[index];
++  }
++  
++  /**
++   * Return the maximum occurence of the specified role per session.
++   * NOTE: The first role has index 0.
++   * 
++   * @param index the index of a role.
++   * @return the maximum occurences of this role per session.
++   */
++  public int getMaximumPerSession(int index)
++  {
++    return maxPerSession[index];
++  }
++  
++  /**
++   * Set the minimum occurence of the specified role per session.
++   * NOTE: The first role has index 0.
++   * 
++   * @param index the index of a role.
++   * @param min the minimum occurence.
++   */
++  public void setMinimumPerSession(int index, int min)
++  {
++    minPerSession[index] = min;
++  }
++  
++  /**
++   * Set the maximum occurence of the specified role per session.
++   * NOTE: The first role has index 0.
++   * 
++   * @param index the index of a role.
++   * @param max the maximum occurence.
++   */
++  public void setMaximumPerSession(int index, int max)
++  {
++    maxPerSession[index] = max;
++  }
++  
++  /**
+    * Produce an XML representation of the roles.
+    */
+   public void save(PrintWriter stream, int level)
+@@ -144,7 +202,9 @@
+     Indenter.println(stream, level, &quot;&lt;roles&gt;&quot;);
+ 
+     for (int r = 0;  r &lt; getNumber();  ++r)
+-      Indenter.println(stream, level+1, &quot;&lt;role name=\&quot;&quot; + getName(r) + &quot;\&quot;/&gt;&quot;);
++      Indenter.println(stream, level+1, &quot;&lt;role name=\&quot;&quot; + getName(r) 
++                       + &quot;\&quot; min=\&quot;&quot; + getMinimumPerSession(r)
++                       + &quot;\&quot; max=\&quot;&quot; + getMaximumPerSession(r) + &quot;\&quot;/&gt;&quot;);
+     
+     Indenter.println(stream, level, &quot;&lt;/roles&gt;&quot;);
+   }
+
+Modified: trunk/openSess/SolverConstructor.java
+===================================================================
+--- trunk/openSess/SolverConstructor.java	2005-03-06 12:49:05 UTC (rev 13)
++++ trunk/openSess/SolverConstructor.java	2005-03-09 13:27:43 UTC (rev 14)
+@@ -6,7 +6,7 @@
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     21.02.2005
+- * Revision ID: $Id$
++ * Revision ID: $Id: SolverConstructor.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -84,7 +84,15 @@
+     else if (qName.equals(&quot;roles&quot;))
+       role = -1;
+     else if (qName.equals(&quot;role&quot;))
+-      solver.getRoles().setName(++role, getString(attributes, &quot;name&quot;, role));
++    {
++      Roles roles = solver.getRoles();
++      roles.setName(++role, getString(attributes, &quot;name&quot;, role));
++      int minmax = solver.getPersons().getNumber()
++      				/	solver.getSessionNumber()
++      				/ solver.getRoles().getNumber();
++      roles.setMinimumPerSession(role, getInt(attributes, &quot;min&quot;, minmax));
++      roles.setMaximumPerSession(role, getInt(attributes, &quot;max&quot;, minmax));
++    }
+     else if (qName.equals(&quot;preferredTopic&quot;))
+       solver.getPersons().setPreference(person, ++topic, getInt(attributes, &quot;index&quot;, 0));
+     else if (qName.equals(&quot;solutionParameters&quot;))
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000008.html">[Opensess-svn] r13 - tags
+</A></li>
+	<LI>Next message: <A HREF="000010.html">[Opensess-svn] r15 - trunk/openSess
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#9">[ date ]</a>
+              <a href="thread.html#9">[ thread ]</a>
+              <a href="subject.html#9">[ subject ]</a>
+              <a href="author.html#9">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/opensess-svn">More information about the Opensess-svn
+mailing list</a><br>
+</body></html>

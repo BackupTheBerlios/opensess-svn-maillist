@@ -1,0 +1,413 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Opensess-svn] r3 - in trunk: . website
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/opensess-svn/2005-March/index.html" >
+   <LINK REL="made" HREF="mailto:opensess-svn%40lists.berlios.de?Subject=Re%3A%20%5BOpensess-svn%5D%20r3%20-%20in%20trunk%3A%20.%20website&In-Reply-To=%3C200503041240.j24CeXUi016573%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   
+   <LINK REL="Next"  HREF="000001.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Opensess-svn] r3 - in trunk: . website</H1>
+    <B>Andreas Wickner at BerliOS</B> 
+    <A HREF="mailto:opensess-svn%40lists.berlios.de?Subject=Re%3A%20%5BOpensess-svn%5D%20r3%20-%20in%20trunk%3A%20.%20website&In-Reply-To=%3C200503041240.j24CeXUi016573%40sheep.berlios.de%3E"
+       TITLE="[Opensess-svn] r3 - in trunk: . website">awickner at sheep.berlios.de
+       </A><BR>
+    <I>Fri Mar  4 13:40:33 CET 2005</I>
+    <P><UL>
+        
+        <LI>Next message: <A HREF="000001.html">[Opensess-svn] r5 - trunk/openSess
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#0">[ date ]</a>
+              <a href="thread.html#0">[ thread ]</a>
+              <a href="subject.html#0">[ subject ]</a>
+              <a href="author.html#0">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: awickner
+Date: 2005-03-04 13:40:32 +0100 (Fri, 04 Mar 2005)
+New Revision: 3
+
+Added:
+   trunk/website/
+   trunk/website/background.html
+   trunk/website/bg.png
+   trunk/website/index.html
+   trunk/website/menu.png
+   trunk/website/opensess.css
+   trunk/website/title.png
+Log:
+Website added to repository
+
+Added: trunk/website/background.html
+===================================================================
+--- trunk/website/background.html	2005-03-03 13:10:32 UTC (rev 2)
++++ trunk/website/background.html	2005-03-04 12:40:32 UTC (rev 3)
+@@ -0,0 +1,148 @@
++&lt;html&gt;
++  &lt;head&gt;
++    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=UTF-8&quot;&gt;
++    &lt;title&gt;OpenSess Background Information&lt;/title&gt;
++    &lt;link rel=&quot;stylesheet&quot; href=&quot;opensess.css&quot;&gt;
++  &lt;/header&gt;
++  &lt;body&gt;
++    &lt;div id=&quot;title&quot;&gt;&lt;h1&gt;OpenSess Background Information&lt;/h1&gt;&lt;/div&gt;
++    &lt;div id=&quot;menu&quot;&gt;
++      &lt;ul class=&quot;top&quot;&gt;
++        &lt;li class=&quot;level1&quot;&gt;&lt;a href=&quot;index.html&quot;&gt;Home&lt;/a&gt;&lt;/li&gt;
++        &lt;li class=&quot;level1&quot;&gt;Background&lt;/li&gt;
++        &lt;li class=&quot;level1&quot;&gt;&lt;a href=&quot;<A HREF="https://developer.berlios.de/projects/opensess/">https://developer.berlios.de/projects/opensess/</A>&quot;&gt;Project Page&lt;/a&gt;&lt;/li&gt;
++        &lt;li class=&quot;level1&quot;&gt;&lt;a href=&quot;<A HREF="https://developer.berlios.de/mail/?group_id=3232">https://developer.berlios.de/mail/?group_id=3232</A>&quot;&gt;Mailing Lists&lt;/a&gt;&lt;/li&gt;
++        &lt;li class=&quot;level1&quot;&gt;&lt;a href=&quot;<A HREF="https://developer.berlios.de/forum/forum.php?forum_id=9870">https://developer.berlios.de/forum/forum.php?forum_id=9870</A>&quot;&gt;Users Forum&lt;/a&gt;&lt;/li&gt;
++      &lt;/ul&gt;
++      &lt;p&gt;
++      &lt;/p&gt;
++      &lt;p&gt;
++        &lt;a href=&quot;<A HREF="http://developer.berlios.de">http://developer.berlios.de</A>&quot; title=&quot;BerliOS Developer&quot;&gt; 
++          &lt;img src=&quot;<A HREF="http://developer.berlios.de/bslogo.php?group_id=3232">http://developer.berlios.de/bslogo.php?group_id=3232</A>&quot; width=&quot;124px&quot; height=&quot;32px&quot; border=&quot;0&quot; alt=&quot;BerliOS Developer Logo&quot;&gt;
++        &lt;/a&gt;   
++      &lt;/p&gt;
++    &lt;/div&gt;
++    &lt;div id=&quot;body&quot;&gt;
++
++    &lt;p&gt;OpenSess is used to organize discussions when there are various
++      topic, and the participants have varying preferences for the 
++      individual topics.
++    &lt;/p&gt;
++
++    &lt;p&gt;Imagine a group of people that meets to exchange and generate ideas,
++      discuss them, and maybe even make one or two decisions about them.
++      There is probably a single common reason for the meeting, but it
++      might make sense to break down this &quot;root topic&quot; into individual
++      &quot;sub topics&quot; and discuss them separately. There is no reason for
++      everyone to attend all discussions and in particular, nobody wants
++      to attend a discussion that he or she is not at all interested in.
++      This results in smaller groups that can work more efficiently
++      compared to discussion everything in the big group.
++      If some of the discussions could take place in parallel, it might
++      speed up the entire discussion (and maybe decision) process 
++      considerably.
++    &lt;/p&gt;
++
++    &lt;p&gt;This leaves us with the big question: Which topics should be
++      discussed in parallel and how should people distribute themselves
++      between the discussion sessions?
++    &lt;/p&gt;
++
++    &lt;p&gt;This question has been asked before and there have been several
++      attempts to answer them. The suggested strategies range from
++      almost complete freedom (for example the OpenSpace method
++      described at www.openspaceworld.org) to very rigid organisational
++      schemes that work only for certain numbers of people and topics
++      (for example the Syntegrity method described at www.syntegrity.com).
++    &lt;/p&gt;
++
++    &lt;p&gt;OpenSess tends towards the more strongly structured methods in that
++      it attempts to find nearly optimal topic clusterings and participant
++      distributions. However, it has only a few rules regarding the
++      numbers of participants and topics and it incorporates the 
++      preferences that participants have for certain topics.
++      In particular, the OpenSess method depends on the following 
++      concepts and constraints:
++    &lt;/p&gt;
++    
++    &lt;ul&gt;
++      &lt;li&gt;
++        &lt;p&gt;The number of &lt;em&gt;sessions&lt;/em&gt; that can take place in parallel.
++          This will usually be determined by some &quot;real world constraint&quot;
++          like the number of available rooms.
++        &lt;/p&gt;
++      &lt;/li&gt;
++      &lt;li&gt;
++        &lt;p&gt;The number of &lt;em&gt;participants&lt;/em&gt; that attend the meeting.
++          The number of participants must be divisible by the number of
++          sessions.
++        &lt;/p&gt;
++      &lt;/li&gt;
++      &lt;li&gt;
++        &lt;p&gt;The number of &lt;em&gt;topics&lt;/em&gt; that are to be discussed in the
++          individual sessions. This number is related to the number of
++          &lt;em&gt;rounds&lt;/em&gt; that are neccessary to discuss all topics
++          when each round is a set of parallel sessions. In other words,
++          you can either fix the number of rounds which means that you will 
++          have &lt;em&gt;rounds*sessions&lt;/em&gt; topics, or you can start with
++          a fixed number of topics, which means that you will have
++          &lt;em&gt;topics/sessions&lt;/em&gt; rounds.
++        &lt;/p&gt;
++      &lt;/li&gt;
++      &lt;li&gt;
++        &lt;p&gt;The number of &lt;em&gt;roles&lt;/em&gt; that participants can have in a session.
++          Typical roles are &quot;moderator&quot;, &quot;critic&quot; or &quot;observer&quot;.
++          the algorithm currently used by OpenSess demands that both the
++          number of participants and the number of topics must also be
++          divisible by the number of roles, but later versions of OpenSess
++          will probably lift that constraint.
++          OpenSess currently allocates an equal number of participants to
++          each role so you will have as many moderators as critics and 
++          observers. This might also change in a later release of OpenSess.
++        &lt;/p&gt;
++      &lt;/li&gt;
++    &lt;/ul&gt;
++
++    &lt;p&gt;The roles are maintained in a list in which the roles are sorted
++      by &quot;strength&quot; or &quot;importance&quot;, so that there is a &quot;strongest role&quot;
++      and a &quot;weakest role&quot;.
++    &lt;/p&gt;
++
++    &lt;p&gt;Each participant also has a &lt;em&gt;preference list&lt;/em&gt; which contains
++      every topic exactly once. The first topic in the list is the most
++      important topic for the participant and the last topic is the topic
++      of least interest. OpenSess will try to find configurations in which
++      participants can attend the sessions that are most interesting for them
++      and it will also try to give them the &quot;strongest&quot; role available.
++      In fact, solutions will be judged by how well the interests of the
++      participants are met.
++    &lt;/p&gt;
++
++    &lt;p&gt;Each &lt;em&gt;solution&lt;/em&gt; produced by OpenSess will consist of the following:
++    &lt;/p&gt;
++
++    &lt;ul&gt;
++      &lt;li&gt;
++        &lt;p&gt;The clustering of topics into rounds of sessions.
++        &lt;/p&gt;
++      &lt;/li&gt;
++      &lt;li&gt;
++        &lt;p&gt;The assignment of participants to sessions and the roles
++          that they have in each session.
++        &lt;/p&gt;
++      &lt;/li&gt;
++      &lt;li&gt;
++        &lt;p&gt;Several statistical values that evaluate how well the solution
++          meets the interests of the participants.
++        &lt;/p&gt;
++      &lt;/li&gt;
++    &lt;/ul&gt;
++
++    &lt;p&gt;Currently OpenSess produces an arbitrary number of solutions and
++      it is the user's task to choose the one he or she considers best.
++      Later versions of OpenSess will try to better support the user
++      in this task.
++    &lt;/p&gt;
++    &lt;/div&gt;
++ &lt;/body&gt;
++&lt;/html&gt;
+\ No newline at end of file
+
+Added: trunk/website/bg.png
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/website/bg.png
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+Added: trunk/website/index.html
+===================================================================
+--- trunk/website/index.html	2005-03-03 13:10:32 UTC (rev 2)
++++ trunk/website/index.html	2005-03-04 12:40:32 UTC (rev 3)
+@@ -0,0 +1,56 @@
++&lt;html&gt;
++  &lt;head&gt;
++    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=UTF-8&quot;&gt;
++    &lt;title&gt;OpenSess&lt;/title&gt;
++    &lt;link rel=&quot;stylesheet&quot; href=&quot;opensess.css&quot;&gt;
++  &lt;/header&gt;
++  &lt;body&gt;
++    &lt;div id=&quot;title&quot;&gt;&lt;h1&gt;OpenSess&lt;/h1&gt;&lt;/div&gt;
++    &lt;div id=&quot;menu&quot;&gt;
++      &lt;ul class=&quot;top&quot;&gt;
++        &lt;li class=&quot;level1&quot;&gt;Home&lt;/li&gt;
++        &lt;li class=&quot;level1&quot;&gt;&lt;a href=&quot;background.html&quot;&gt;Background&lt;/a&gt;&lt;/li&gt;
++        &lt;li class=&quot;level1&quot;&gt;&lt;a href=&quot;<A HREF="https://developer.berlios.de/projects/opensess/">https://developer.berlios.de/projects/opensess/</A>&quot;&gt;Project Page&lt;/a&gt;&lt;/li&gt;
++        &lt;li class=&quot;level1&quot;&gt;&lt;a href=&quot;<A HREF="https://developer.berlios.de/mail/?group_id=3232">https://developer.berlios.de/mail/?group_id=3232</A>&quot;&gt;Mailing Lists&lt;/a&gt;&lt;/li&gt;
++        &lt;li class=&quot;level1&quot;&gt;&lt;a href=&quot;<A HREF="https://developer.berlios.de/forum/forum.php?forum_id=9870">https://developer.berlios.de/forum/forum.php?forum_id=9870</A>&quot;&gt;Users Forum&lt;/a&gt;&lt;/li&gt;
++        &lt;li class=&quot;level1&quot;&gt;
++          &lt;p&gt;
++            &nbsp;
++          &lt;/p&gt;
++          &lt;p&gt;
++            &nbsp;
++          &lt;/p&gt;
++          &lt;a href=&quot;<A HREF="http://developer.berlios.de">http://developer.berlios.de</A>&quot; title=&quot;BerliOS Developer&quot;&gt; 
++            &lt;img src=&quot;<A HREF="http://developer.berlios.de/bslogo.php?group_id=3232">http://developer.berlios.de/bslogo.php?group_id=3232</A>&quot; width=&quot;124px&quot; height=&quot;32px&quot; border=&quot;0&quot; alt=&quot;BerliOS Developer Logo&quot;&gt;
++          &lt;/a&gt;    
++        &lt;/li&gt;
++      &lt;/ul&gt;
++    &lt;/div&gt;
++    &lt;div id=&quot;body&quot;&gt;
++      &lt;p&gt;Welcome to the home of OpenSess, a program that helps you to 
++        organize discussion of various topics in parallel sessions where 
++        the participants have different preferences for individual topics 
++        and can play several roles.
++      &lt;/p&gt;
++      &lt;p&gt;You can find out more about what OpenSess is in the
++        &lt;a href=&quot;background.html&quot;&gt;background information&lt;/a&gt;.
++      &lt;/p&gt;
++      &lt;p&gt;This site has just been created and is very temporary.
++        If you are interested in OpenSess, you can join our
++        &lt;a href=&quot;<A HREF="https://developer.berlios.de/mail/?group_id=3232">https://developer.berlios.de/mail/?group_id=3232</A>&quot;&gt;mailing lists&lt;/a&gt;
++        to hear about any new developments. And yes: Downloads will be available in
++        a few days.
++      &lt;/p&gt;
++      &lt;p&gt;You can also join the 
++        &lt;a href=&quot;<A HREF="https://developer.berlios.de/">https://developer.berlios.de/</A>&quot;&gt;BerliOS Developer community&lt;/a&gt; 
++        and start discussing the future direction of OpenSess in the
++        &lt;a href=&quot;<A HREF="https://developer.berlios.de/forum/forum.php?forum_id=9870">https://developer.berlios.de/forum/forum.php?forum_id=9870</A>&quot;&gt;OpenSess Users Forum&lt;/a&gt;.
++      &lt;/p&gt;
++      &lt;p&gt;If you are interested in contributing to the development of
++        OpenSess, do not hesitate to contact the administrators of the
++        project, which are listed on the
++        &lt;a href=&quot;<A HREF="https://developer.berlios.de/projects/opensess/">https://developer.berlios.de/projects/opensess/</A>&quot;&gt;project page&lt;/a&gt;.
++      &lt;/p&gt;
++    &lt;/div&gt;
++  &lt;/body&gt;
++&lt;/html&gt;
+
+Added: trunk/website/menu.png
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/website/menu.png
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+Added: trunk/website/opensess.css
+===================================================================
+--- trunk/website/opensess.css	2005-03-03 13:10:32 UTC (rev 2)
++++ trunk/website/opensess.css	2005-03-04 12:40:32 UTC (rev 3)
+@@ -0,0 +1,85 @@
++* {
++  color: #183A0A;
++  font: normal 12pt sans-serif, serif;
++}
++
++body {
++  background: white url(&quot;bg.png&quot;) repeat-y top left;
++}
++
++div#title { 
++  position: absolute;
++  top: 0px;
++  left: 0px;
++  right: 0px;
++  bottom: 60px;
++}
++
++div#title h1 { 
++  margin: 10px 10px 10px 10px;
++  width: 100%;
++  height: 40px;
++  padding: 5px 20px 5px 20px;
++  background: transparent url(&quot;title.png&quot;) no-repeat top left;
++}
++
++div#menu {  
++  position: absolute;
++  top: 60px;
++  left: 0px;
++  right: 150px;
++  bottom: 0px;  
++}
++
++div#menu * {  
++  margin: 0px 0px 0px 0px;
++  padding: 0px 0px 0px 0px;
++  font: bold 10pt sans-serif, serif;
++  list-style-type: none;
++}
++
++div#menu a {  
++  text-decoration: none;
++  color: #701010;
++}
++
++div#menu ul.top {
++  width: 130px;
++  margin: 10px 0px 0px 10px;
++  padding: 5px 0px 5px 5px;  
++  background: transparent url(&quot;menu.png&quot;) repeat-x top left;
++}
++
++div#menu li.level1 { 
++  margin: 0px 0px 0px 0px;
++}
++
++div#menu li.level2 { 
++  padding: 0px 0px 0px 7px;
++}
++
++div#menu li.level3 { 
++  margin: 0px 0px 0px 14px;
++}
++
++div#body {  
++  position: absolute;
++  top: 60px;
++  left: 160px;
++  right: auto;
++  bottom: 100%;  
++  padding: 0px 20px 0px 0px;
++}
++
++h1 {
++  font-weight: bold;
++  font-size: 18pt;
++}
++
++a.button { 
++  margin: 5px 5px;
++}
++
++table * img { 
++  border-style: none;
++}
+\ No newline at end of file
+
+Added: trunk/website/title.png
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/website/title.png
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	
+	<LI>Next message: <A HREF="000001.html">[Opensess-svn] r5 - trunk/openSess
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#0">[ date ]</a>
+              <a href="thread.html#0">[ thread ]</a>
+              <a href="subject.html#0">[ subject ]</a>
+              <a href="author.html#0">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/opensess-svn">More information about the Opensess-svn
+mailing list</a><br>
+</body></html>

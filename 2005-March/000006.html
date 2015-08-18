@@ -1,0 +1,165 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Opensess-svn] r11 - in trunk: help openSess
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/opensess-svn/2005-March/index.html" >
+   <LINK REL="made" HREF="mailto:opensess-svn%40lists.berlios.de?Subject=Re%3A%20%5BOpensess-svn%5D%20r11%20-%20in%20trunk%3A%20help%20openSess&In-Reply-To=%3C200503051501.j25F1waa028852%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000005.html">
+   <LINK REL="Next"  HREF="000007.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Opensess-svn] r11 - in trunk: help openSess</H1>
+    <B>Andreas Wickner at BerliOS</B> 
+    <A HREF="mailto:opensess-svn%40lists.berlios.de?Subject=Re%3A%20%5BOpensess-svn%5D%20r11%20-%20in%20trunk%3A%20help%20openSess&In-Reply-To=%3C200503051501.j25F1waa028852%40sheep.berlios.de%3E"
+       TITLE="[Opensess-svn] r11 - in trunk: help openSess">awickner at sheep.berlios.de
+       </A><BR>
+    <I>Sat Mar  5 16:01:58 CET 2005</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000005.html">[Opensess-svn] r10 - trunk/openSess
+</A></li>
+        <LI>Next message: <A HREF="000007.html">[Opensess-svn] r12 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#6">[ date ]</a>
+              <a href="thread.html#6">[ thread ]</a>
+              <a href="subject.html#6">[ subject ]</a>
+              <a href="author.html#6">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: awickner
+Date: 2005-03-05 16:01:57 +0100 (Sat, 05 Mar 2005)
+New Revision: 11
+
+Modified:
+   trunk/help/background.html
+   trunk/openSess/GlobalNewWindow.java
+Log:
+Implemented stronger divisibility constraint in GlobalNewWindow.
+Documented that constraint in the help files.
+
+Modified: trunk/help/background.html
+===================================================================
+--- trunk/help/background.html	2005-03-04 18:45:41 UTC (rev 10)
++++ trunk/help/background.html	2005-03-05 15:01:57 UTC (rev 11)
+@@ -51,9 +51,19 @@
+         &lt;/p&gt;
+       &lt;/li&gt;
+       &lt;li&gt;
++        &lt;p&gt;The number of &lt;em&gt;roles&lt;/em&gt; that participants can have in a session.
++          Typical roles are &quot;moderator&quot;, &quot;critic&quot; or &quot;observer&quot;.
++          OpenSess currently allocates an equal number of participants to
++          each role so you will have as many moderators as critics and 
++          observers. This might change in a later release of OpenSess.
++        &lt;/p&gt;
++      &lt;/li&gt;
++      &lt;li&gt;
+         &lt;p&gt;The number of &lt;em&gt;participants&lt;/em&gt; that attend the meeting.
+-          The number of participants must be divisible by the number of
+-          sessions.
++          The algorithm currently used by OpenSess demands that
++          the number of participants must be divisible by the product 
++          of the number of sessions and the number of roles.
++          Later versions of OpenSess will probably relax that constraint.
+         &lt;/p&gt;
+       &lt;/li&gt;
+       &lt;li&gt;
+@@ -65,20 +75,11 @@
+           have &lt;em&gt;rounds*sessions&lt;/em&gt; topics, or you can start with
+           a fixed number of topics, which means that you will have
+           &lt;em&gt;topics/sessions&lt;/em&gt; rounds.
++          In addition, the number of topics must also be divisible by 
++          the product of the number of sessions and the number of roles
++          (and that constraint might also be relaxed in the future).
+         &lt;/p&gt;
+       &lt;/li&gt;
+-      &lt;li&gt;
+-        &lt;p&gt;The number of &lt;em&gt;roles&lt;/em&gt; that participants can have in a session.
+-          Typical roles are &quot;moderator&quot;, &quot;critic&quot; or &quot;observer&quot;.
+-          the algorithm currently used by OpenSess demands that both the
+-          number of participants and the number of topics must also be
+-          divisible by the number of roles, but later versions of OpenSess
+-          will probably lift that constraint.
+-          OpenSess currently allocates an equal number of participants to
+-          each role so you will have as many moderators as critics and 
+-          observers. This might also change in a later release of OpenSess.
+-        &lt;/p&gt;
+-      &lt;/li&gt;
+     &lt;/ul&gt;
+ 
+     &lt;p&gt;The roles are maintained in a list in which the roles are sorted
+
+Modified: trunk/openSess/GlobalNewWindow.java
+===================================================================
+--- trunk/openSess/GlobalNewWindow.java	2005-03-04 18:45:41 UTC (rev 10)
++++ trunk/openSess/GlobalNewWindow.java	2005-03-05 15:01:57 UTC (rev 11)
+@@ -19,7 +19,7 @@
+  * Copyright 2005 Andreas Wickner
+  * 
+  * Created:     13.02.2005
+- * Revision ID: $Id$
++ * Revision ID: $Id: GlobalNewWindow.java 10 2005-03-04 18:45:41Z awickner $
+  * 
+  * This file is part of OpenSess.
+  * OpenSess is free software; you can redistribute it and/or modify it 
+@@ -159,8 +159,8 @@
+       int roles    = getNumberOfRoles();
+       int sessions = getNumberOfSessions();
+       
+-      boolean topicsOk = (topics % roles) == 0 &amp;&amp; (topics % sessions) == 0;
+-      boolean personsOk = (persons % roles) == 0 &amp;&amp; (persons % sessions) == 0;
++      boolean topicsOk = (topics % (roles*sessions)) == 0;
++      boolean personsOk = (persons % (roles*sessions)) == 0;
+       
+       if (topicsOk &amp;&amp; personsOk)
+       {
+@@ -172,12 +172,12 @@
+         StringBuffer msg = new StringBuffer(&quot;The following constraints were violated:\n&quot;);
+         
+         if (!topicsOk)
+-          msg.append(&quot;- The number of topics must be divisible by the\n&quot;
+-                     +	&quot;  number of roles and by the number of sessions\n&quot;);
++          msg.append(&quot;- The number of topics must be divisible by\n&quot;
++                     +	&quot;  (numberOfRoles * numberOfSessions)\n&quot;);
+         
+         if (!personsOk)
+-          msg.append(&quot;- The number of persons must be divisible by the\n&quot;
+-                     +	&quot;  number of roles and by the number of sessions\n&quot;);
++          msg.append(&quot;- The number of persons must be divisible by\n&quot;
++                     +	&quot;  (numberOfRoles * numberOfSessions)\n&quot;);
+         
+         JOptionPane.showMessageDialog(this, msg, &quot;Constraint Violation&quot;, JOptionPane.ERROR_MESSAGE); 
+       }
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000005.html">[Opensess-svn] r10 - trunk/openSess
+</A></li>
+	<LI>Next message: <A HREF="000007.html">[Opensess-svn] r12 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#6">[ date ]</a>
+              <a href="thread.html#6">[ thread ]</a>
+              <a href="subject.html#6">[ subject ]</a>
+              <a href="author.html#6">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/opensess-svn">More information about the Opensess-svn
+mailing list</a><br>
+</body></html>
